@@ -3,7 +3,7 @@
 
 const esbuild = require('esbuild');
 const isWatch = process.argv.includes('--watch');
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = process.argv.includes('--prod');
 
 /** @type {import('esbuild').BuildOptions} */
 const config = {

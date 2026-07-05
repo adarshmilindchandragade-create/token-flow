@@ -10,9 +10,13 @@ coverage/**
 *.vsix
 .eslintrc.json
 .prettierrc
+.gitignore
+.gitattributes
 tsconfig.json
 esbuild.config.js
 vitest.config.ts
+scripts/**
+.dogfood-results.json
 CLAUDE.md
 AI_INDEX.md
 PROJECT_MEMORY.md
@@ -22,4 +26,7 @@ DATABASE_SCHEMA.md
 CHANGELOG.md
 TODO.md
 KNOWN_ISSUES.md
+HOW_TO_RUN.md
+F5_VALIDATION.md
 docker-compose.mcp.yml
+package-lock.json

@@ -163,7 +163,7 @@
   "scripts": {
     "vscode:prepublish": "npm run build:prod",
     "build": "node esbuild.config.js",
-    "build:prod": "NODE_ENV=production node esbuild.config.js",
+    "build:prod": "node esbuild.config.js --prod",
     "build:watch": "node esbuild.config.js --watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
