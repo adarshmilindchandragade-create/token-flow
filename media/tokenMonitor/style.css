@@ -1,0 +1,143 @@
+/* media/tokenMonitor/style.css — Token Monitor webview styles
+   Uses VS Code CSS variables for theme compatibility (light/dark/high-contrast). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+  padding: 16px;
+  line-height: 1.5;
+}
+
+/* ─── App layout ─────────────────────────────────────────────────────── */
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────── */
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 2px;
+}
+
+/* ─── Stat grid ──────────────────────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--vscode-sideBar-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--vscode-focusBorder);
+}
+
+.stat-card.highlight {
+  border-color: var(--vscode-button-background);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--vscode-descriptionForeground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--vscode-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Savings section ────────────────────────────────────────────────── */
+#savings-section {
+  border-top: 1px solid var(--vscode-panel-border);
+  padding-top: 16px;
+}
+
+#savings-section h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--vscode-foreground);
+}
+
+.savings-bar-container {
+  height: 8px;
+  background: var(--vscode-progressBar-background, rgba(128,128,128,0.2));
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.savings-bar-fill {
+  height: 100%;
+  background: var(--vscode-button-background);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+#savings-text {
+  font-size: 0.8rem;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────── */
+footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#refresh-btn {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+#refresh-btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* ─── Utility ────────────────────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}

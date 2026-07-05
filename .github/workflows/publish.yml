@@ -1,0 +1,51 @@
+name: Publish to VS Code Marketplace
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggered by git tags: v0.1.0, v1.0.0, etc.
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish Extension
+    runs-on: ubuntu-latest
+    environment: marketplace  # Requires 'marketplace' environment with VSCE_PAT secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build (production)
+        run: npm run build:prod
+
+      - name: Package extension
+        run: npm run package
+
+      - name: Publish to Marketplace
+        run: npx vsce publish --no-dependencies
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Upload .vsix as release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tokenflow-ai-${{ github.ref_name }}.vsix
+          path: '*.vsix'

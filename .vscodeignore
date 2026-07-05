@@ -1,0 +1,25 @@
+# Exclude from .vsix package (keep it small for Marketplace)
+.vscode/**
+.vscode-test/**
+.ai/**
+src/**
+.github/**
+node_modules/**
+dist/extension.js.map
+coverage/**
+*.vsix
+.eslintrc.json
+.prettierrc
+tsconfig.json
+esbuild.config.js
+vitest.config.ts
+CLAUDE.md
+AI_INDEX.md
+PROJECT_MEMORY.md
+ARCHITECTURE.md
+API_REFERENCE.md
+DATABASE_SCHEMA.md
+CHANGELOG.md
+TODO.md
+KNOWN_ISSUES.md
+docker-compose.mcp.yml

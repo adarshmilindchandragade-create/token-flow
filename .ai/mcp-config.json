@@ -1,0 +1,66 @@
+{
+  "_comment": "MCP Gateway configuration — infrastructure only. Not in v1 extension request path. Activate with docker-compose.mcp.yml.",
+  "_version": "1.0.0",
+  "_lastUpdated": "2026-07-01",
+  "mcpServers": {
+    "n8n": {
+      "_role": "First-class MCP server and workflow orchestrator. Handles CI triggers, doc generation, test reporting.",
+      "command": "npx",
+      "args": ["-y", "n8n-mcp-server"],
+      "env": {
+        "N8N_BASE_URL": "${N8N_BASE_URL}",
+        "N8N_API_KEY": "${N8N_API_KEY}"
+      }
+    },
+    "git": {
+      "_role": "Repository operations: log, diff, blame, branch management.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."]
+    },
+    "github": {
+      "_role": "GitHub API: PRs, issues, releases, Actions, repo metadata.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "filesystem": {
+      "_role": "Safe filesystem read/write within the project workspace.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    },
+    "postgres": {
+      "_role": "Future: session analytics, cost tracking, usage history (v2+).",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${DATABASE_URL}"
+      }
+    },
+    "docker": {
+      "_role": "Container management for MCP stack and integration test environments.",
+      "command": "npx",
+      "args": ["-y", "docker-mcp"]
+    },
+    "browser": {
+      "_role": "Browser automation: VS Code Marketplace verification, documentation scraping.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "memory": {
+      "_role": "Persistent AI agent memory: project state, decisions, completed tasks across sessions.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    }
+  },
+  "gateway": {
+    "_note": "Claude Code / Copilot reads this file for MCP tool discovery. n8n orchestrates workflow automation — not business logic.",
+    "n8nWorkflows": {
+      "ciTrigger": "Trigger CI on PR open/update",
+      "docGeneration": "Generate API docs after feature completion",
+      "testReporting": "Post test coverage reports to PR comments",
+      "changelogUpdate": "Auto-update CHANGELOG.md on merge to main"
+    }
+  }
+}

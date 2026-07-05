@@ -1,0 +1,201 @@
+{
+  "name": "tokenflow-ai",
+  "displayName": "TokenFlow AI",
+  "description": "Token-aware AI context optimizer for VS Code. Works with OpenRouter, Anthropic, Ollama, and more.",
+  "version": "1.1.0",
+  "publisher": "tokenflow-ai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tokenflow-ai/tokenflow-ai"
+  },
+  "bugs": {
+    "url": "https://github.com/tokenflow-ai/tokenflow-ai/issues"
+  },
+  "homepage": "https://github.com/tokenflow-ai/tokenflow-ai#readme",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "AI",
+    "tokens",
+    "context",
+    "optimization",
+    "openrouter",
+    "anthropic",
+    "ollama",
+    "claude",
+    "openai",
+    "gemini",
+    "cost",
+    "multi-provider"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tokenflow.showTokenMonitor",
+        "title": "TokenFlow: Show Token Monitor",
+        "icon": "$(circuit-board)"
+      },
+      {
+        "command": "tokenflow.setApiKey",
+        "title": "TokenFlow: Set API Key"
+      },
+      {
+        "command": "tokenflow.selectProvider",
+        "title": "TokenFlow: Select Provider",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "tokenflow.selectModel",
+        "title": "TokenFlow: Select Model",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "tokenflow.sendPrompt",
+        "title": "TokenFlow: Send Optimized Prompt"
+      },
+      {
+        "command": "tokenflow.showBeforeAfter",
+        "title": "TokenFlow: Show Before/After Comparison"
+      },
+      {
+        "command": "tokenflow.resetSession",
+        "title": "TokenFlow: Reset Session Stats"
+      }
+    ],
+    "configuration": {
+      "title": "TokenFlow AI",
+      "properties": {
+        "tokenflow.provider": {
+          "type": "string",
+          "default": "openrouter",
+          "enum": [
+            "openrouter",
+            "anthropic",
+            "ollama",
+            "openai",
+            "gemini"
+          ],
+          "enumDescriptions": [
+            "OpenRouter — Free models available, 50+ models via single key (recommended for development)",
+            "Anthropic Claude — Highest quality, direct API (recommended for production)",
+            "Ollama — Local inference, no API key, works offline",
+            "OpenAI — GPT-4o and o-series (coming in v2)",
+            "Google Gemini — Gemini 2.5 Flash/Pro (coming in v2)"
+          ],
+          "description": "AI provider to use. Switch without restarting VS Code."
+        },
+        "tokenflow.model": {
+          "type": "string",
+          "default": "",
+          "description": "Model identifier for the selected provider. Leave empty to use the provider default. Use 'TokenFlow: Select Model' for a guided picker."
+        },
+        "tokenflow.openrouterModel": {
+          "type": "string",
+          "default": "google/gemma-3-12b-it:free",
+          "description": "Default OpenRouter model. Free models end in ':free'. See openrouter.ai/models for the full list."
+        },
+        "tokenflow.ollamaModel": {
+          "type": "string",
+          "default": "qwen2.5:latest",
+          "description": "Default Ollama model (must be installed locally via 'ollama pull <model>')."
+        },
+        "tokenflow.ollamaBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama base URL. Change if running Ollama on a non-standard port or remote host."
+        },
+        "tokenflow.maxContextTokens": {
+          "type": "number",
+          "default": 100000,
+          "minimum": 1000,
+          "maximum": 1000000,
+          "description": "Hard cap on tokens sent to the model."
+        },
+        "tokenflow.includeReadme": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include README.md in context when present."
+        },
+        "tokenflow.stripComments": {
+          "type": "boolean",
+          "default": false,
+          "description": "Strip code comments from context to reduce token count. Off by default — may affect answer quality."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "tokenflow.showTokenMonitor"
+        },
+        {
+          "command": "tokenflow.setApiKey"
+        },
+        {
+          "command": "tokenflow.selectProvider"
+        },
+        {
+          "command": "tokenflow.selectModel"
+        },
+        {
+          "command": "tokenflow.sendPrompt"
+        },
+        {
+          "command": "tokenflow.showBeforeAfter"
+        },
+        {
+          "command": "tokenflow.resetSession"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build:prod",
+    "build": "node esbuild.config.js",
+    "build:prod": "NODE_ENV=production node esbuild.config.js",
+    "build:watch": "node esbuild.config.js --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "dogfood": "node scripts/dogfood.js",
+    "dogfood:comments": "node scripts/dogfood.js --strip-comments",
+    "dogfood:file": "node scripts/dogfood.js --file",
+    "package": "vsce package",
+    "pretest": "npm run type-check && npm run lint"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "js-tiktoken": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-import": "^2.29.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.3.0",
+    "vite": "^8.1.3",
+    "vitest": "^4.1.9"
+  }
+}
