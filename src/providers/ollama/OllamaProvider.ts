@@ -58,19 +58,16 @@ export class OllamaProvider extends BaseProvider {
     const start = Date.now();
     const model = request.model ?? this.modelId;
 
-    const res = await this.fetchJson<OllamaResponse>(
-      `${this.apiBase}/chat/completions`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          model,
-          messages: this.buildMessages(request),
-          max_tokens: request.maxTokens ?? 4096,
-          temperature: request.temperature,
-          stream: false,
-        }),
-      },
-    );
+    const res = await this.fetchJson<OllamaResponse>(`${this.apiBase}/chat/completions`, {
+      method: 'POST',
+      body: JSON.stringify({
+        model,
+        messages: this.buildMessages(request),
+        max_tokens: request.maxTokens ?? 4096,
+        temperature: request.temperature,
+        stream: false,
+      }),
+    });
 
     const content = res.choices[0]?.message.content ?? '';
 
@@ -114,16 +111,24 @@ export class OllamaProvider extends BaseProvider {
         const result = await reader.read();
         done = result.done;
         if (result.value) {
-          const lines = decoder.decode(result.value as Uint8Array).split('\n').filter((l) => l.startsWith('data: '));
+          const lines = decoder
+            .decode(result.value as Uint8Array)
+            .split('\n')
+            .filter((l) => l.startsWith('data: '));
           for (const line of lines) {
             const data = line.slice(6).trim();
             if (data === '[DONE]') break;
             try {
               const chunk = JSON.parse(data) as OllamaStreamChunk;
               const delta = chunk.choices[0]?.delta.content ?? '';
-              if (delta) { fullContent += delta; onChunk(delta); }
+              if (delta) {
+                fullContent += delta;
+                onChunk(delta);
+              }
               if (chunk.choices[0]?.finish_reason) stopReason = chunk.choices[0].finish_reason;
-            } catch { /* malformed chunk */ }
+            } catch {
+              /* malformed chunk */
+            }
           }
         }
       }
@@ -135,7 +140,12 @@ export class OllamaProvider extends BaseProvider {
     return {
       content: fullContent,
       model,
-      usage: { inputTokens, outputTokens, totalTokens: inputTokens + outputTokens, estimatedCostUsd: 0 },
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+        estimatedCostUsd: 0,
+      },
       stopReason,
       provider: this.name,
       latencyMs: Date.now() - start,

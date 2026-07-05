@@ -10,14 +10,43 @@ import {
 
 /** Extensions treated as readable text source files. */
 const TEXT_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.mts', '.cts',
-  '.js', '.jsx', '.mjs', '.cjs',
-  '.py', '.rb', '.go', '.rs', '.java', '.cs', '.cpp', '.c', '.h',
-  '.html', '.css', '.scss', '.less',
-  '.json', '.yaml', '.yml', '.toml', '.ini',
-  '.md', '.txt', '.sh', '.bash', '.zsh', '.fish',
-  '.sql', '.graphql', '.gql',
-  '.xml', '.env.example',
+  '.ts',
+  '.tsx',
+  '.mts',
+  '.cts',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.py',
+  '.rb',
+  '.go',
+  '.rs',
+  '.java',
+  '.cs',
+  '.cpp',
+  '.c',
+  '.h',
+  '.html',
+  '.css',
+  '.scss',
+  '.less',
+  '.json',
+  '.yaml',
+  '.yml',
+  '.toml',
+  '.ini',
+  '.md',
+  '.txt',
+  '.sh',
+  '.bash',
+  '.zsh',
+  '.fish',
+  '.sql',
+  '.graphql',
+  '.gql',
+  '.xml',
+  '.env.example',
 ]);
 
 /**
@@ -28,8 +57,7 @@ export class FileFilter {
   private readonly workspaceRoot: string;
 
   constructor() {
-    this.workspaceRoot =
-      vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+    this.workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
   }
 
   /**

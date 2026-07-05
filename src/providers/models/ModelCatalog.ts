@@ -49,9 +49,7 @@ const ALL_MODELS: ModelEntry[] = [
  * Pure static class — no VS Code dependencies.
  */
 export class ModelCatalog {
-  private static readonly byId = new Map<string, ModelEntry>(
-    ALL_MODELS.map((m) => [m.id, m]),
-  );
+  private static readonly byId = new Map<string, ModelEntry>(ALL_MODELS.map((m) => [m.id, m]));
 
   /**
    * Returns the ModelEntry for a given model ID.
@@ -65,14 +63,12 @@ export class ModelCatalog {
    * Returns all models for a given provider, sorted by: free first, then alphabetical.
    */
   static getModelsForProvider(provider: ProviderName): ModelEntry[] {
-    return ALL_MODELS
-      .filter((m) => m.provider === provider && !m.isDeprecated)
-      .sort((a, b) => {
-        if (a.isFree !== b.isFree) return a.isFree ? -1 : 1;
-        if (a.isDefault) return -1;
-        if (b.isDefault) return 1;
-        return a.displayName.localeCompare(b.displayName);
-      });
+    return ALL_MODELS.filter((m) => m.provider === provider && !m.isDeprecated).sort((a, b) => {
+      if (a.isFree !== b.isFree) return a.isFree ? -1 : 1;
+      if (a.isDefault) return -1;
+      if (b.isDefault) return 1;
+      return a.displayName.localeCompare(b.displayName);
+    });
   }
 
   /**
@@ -94,9 +90,7 @@ export class ModelCatalog {
   /**
    * Returns all models that support a given capability.
    */
-  static getByCapability(
-    capability: keyof ProviderCapabilities,
-  ): ModelEntry[] {
+  static getByCapability(capability: keyof ProviderCapabilities): ModelEntry[] {
     return ALL_MODELS.filter((m) => m.capabilities[capability] && !m.isDeprecated);
   }
 
@@ -104,11 +98,7 @@ export class ModelCatalog {
    * Estimates the USD cost for a request to the given model.
    * Delegates to PricingCatalog — model metadata and pricing are independent.
    */
-  static estimateCost(
-    modelId: string,
-    inputTokens: number,
-    outputTokens: number,
-  ): number {
+  static estimateCost(modelId: string, inputTokens: number, outputTokens: number): number {
     return PricingCatalog.estimateCost(modelId, inputTokens, outputTokens);
   }
 

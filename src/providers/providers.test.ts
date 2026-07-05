@@ -112,7 +112,10 @@ describe('ProviderFactory', () => {
 
   it('throws PROVIDER_NOT_CONFIGURED when openrouter key is missing', async () => {
     await expect(
-      ProviderFactory.createRaw({ name: 'openrouter', modelId: 'google/gemma-3-12b-it:free' }, secretStore),
+      ProviderFactory.createRaw(
+        { name: 'openrouter', modelId: 'google/gemma-3-12b-it:free' },
+        secretStore,
+      ),
     ).rejects.toSatisfy(
       (err: unknown) =>
         err instanceof TokenFlowError && err.code === TokenFlowErrorCode.PROVIDER_NOT_CONFIGURED,
@@ -121,7 +124,10 @@ describe('ProviderFactory', () => {
 
   it('throws PROVIDER_NOT_CONFIGURED when anthropic key is missing', async () => {
     await expect(
-      ProviderFactory.createRaw({ name: 'anthropic', modelId: 'claude-3-5-sonnet-20241022' }, secretStore),
+      ProviderFactory.createRaw(
+        { name: 'anthropic', modelId: 'claude-3-5-sonnet-20241022' },
+        secretStore,
+      ),
     ).rejects.toSatisfy(
       (err: unknown) =>
         err instanceof TokenFlowError && err.code === TokenFlowErrorCode.PROVIDER_NOT_CONFIGURED,
@@ -174,7 +180,11 @@ describe('ProviderFactory', () => {
 
   it('lists all supported providers', () => {
     expect(ProviderFactory.SUPPORTED_PROVIDERS).toEqual([
-      'openrouter', 'anthropic', 'ollama', 'openai', 'gemini',
+      'openrouter',
+      'anthropic',
+      'ollama',
+      'openai',
+      'gemini',
     ]);
   });
 });
@@ -196,7 +206,13 @@ describe('RetryMiddleware', () => {
     const fakeProvider = {
       name: 'openrouter' as const,
       modelId: 'test-model',
-      capabilities: { streaming: false, vision: false, thinking: false, tools: false, embeddings: false },
+      capabilities: {
+        streaming: false,
+        vision: false,
+        thinking: false,
+        tools: false,
+        embeddings: false,
+      },
       connect: vi.fn(),
       isAvailable: vi.fn().mockResolvedValue(true),
       stream: vi.fn(),
@@ -221,7 +237,13 @@ describe('RetryMiddleware', () => {
     const fakeProvider = {
       name: 'openai' as const,
       modelId: 'gpt-4o',
-      capabilities: { streaming: false, vision: false, thinking: false, tools: false, embeddings: false },
+      capabilities: {
+        streaming: false,
+        vision: false,
+        thinking: false,
+        tools: false,
+        embeddings: false,
+      },
       connect: vi.fn(),
       isAvailable: vi.fn(),
       stream: vi.fn(),

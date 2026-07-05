@@ -3,8 +3,8 @@
 import { calculateCost } from '../../core/domain/entities/TokenUsage';
 
 interface ModelPricing {
-  inputCostPerMToken: number;   // USD per 1,000,000 input tokens
-  outputCostPerMToken: number;  // USD per 1,000,000 output tokens
+  inputCostPerMToken: number; // USD per 1,000,000 input tokens
+  outputCostPerMToken: number; // USD per 1,000,000 output tokens
   contextWindow: number;
 }
 

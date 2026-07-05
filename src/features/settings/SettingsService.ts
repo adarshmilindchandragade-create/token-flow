@@ -11,10 +11,10 @@ import { ModelCatalog } from '../../providers/models/ModelCatalog';
 /** Display metadata for each provider in the quick-pick. */
 const PROVIDER_DISPLAY: Record<ProviderName, { label: string; detail: string }> = {
   openrouter: { label: '🌐 OpenRouter', detail: 'Free models available · Best for development' },
-  anthropic:  { label: '🤖 Anthropic',  detail: 'Claude Sonnet / Haiku / Opus · Production quality' },
-  ollama:     { label: '🖥️ Ollama',      detail: 'Local inference · No API key · No internet required' },
-  openai:     { label: '🧠 OpenAI',      detail: 'GPT-4o / o3 / o4-mini · Coming in v2' },
-  gemini:     { label: '✨ Gemini',      detail: 'Gemini 2.5 Flash / Pro · Coming in v2' },
+  anthropic: { label: '🤖 Anthropic', detail: 'Claude Sonnet / Haiku / Opus · Production quality' },
+  ollama: { label: '🖥️ Ollama', detail: 'Local inference · No API key · No internet required' },
+  openai: { label: '🧠 OpenAI', detail: 'GPT-4o / o3 / o4-mini · Coming in v2' },
+  gemini: { label: '✨ Gemini', detail: 'Gemini 2.5 Flash / Pro · Coming in v2' },
 };
 
 /**
@@ -49,7 +49,13 @@ export class SettingsService {
 
         return {
           label: `${statusIcon} ${display.label.replace(/^.+ /, '')}`,
-          description: isStub ? 'Coming in v2' : isOllama ? 'No key needed' : isConfigured ? 'Ready' : 'Needs API key',
+          description: isStub
+            ? 'Coming in v2'
+            : isOllama
+              ? 'No key needed'
+              : isConfigured
+                ? 'Ready'
+                : 'Needs API key',
           detail: display.detail,
           value: name,
           picked: name === this.registry.getActiveProviderName(),
@@ -118,16 +124,16 @@ export class SettingsService {
 
     await config.update('model', selected.value, vscode.ConfigurationTarget.Global);
 
-    void vscode.window.showInformationMessage(
-      `✅ TokenFlow: Model set to ${selected.value}`,
-    );
+    void vscode.window.showInformationMessage(`✅ TokenFlow: Model set to ${selected.value}`);
   }
 
   /**
    * Prompts the user for an API key for the specified provider, stores it,
    * and re-initializes the registry.
    */
-  async setApiKeyFor(provider: ProviderName = this.registry.getActiveProviderName()): Promise<void> {
+  async setApiKeyFor(
+    provider: ProviderName = this.registry.getActiveProviderName(),
+  ): Promise<void> {
     await this.promptForApiKey(provider);
     await this.registry.initialize();
   }
@@ -137,10 +143,10 @@ export class SettingsService {
   private async promptForApiKey(provider: ProviderName): Promise<boolean> {
     const hints: Record<ProviderName, string> = {
       openrouter: 'sk-or-... (get free key at openrouter.ai)',
-      anthropic:  'sk-ant-... (console.anthropic.com)',
-      ollama:     'No key needed',
-      openai:     'sk-... (platform.openai.com)',
-      gemini:     'AIza... (aistudio.google.com)',
+      anthropic: 'sk-ant-... (console.anthropic.com)',
+      ollama: 'No key needed',
+      openai: 'sk-... (platform.openai.com)',
+      gemini: 'AIza... (aistudio.google.com)',
     };
 
     const key = await vscode.window.showInputBox({

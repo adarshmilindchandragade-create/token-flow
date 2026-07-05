@@ -56,19 +56,13 @@ export class ContextBuilder implements IContextPort {
 
     for (const file of context.changedFiles) {
       sections.push(
-        this.formatSection(
-          `Changed File: ${file.relativePath}`,
-          this.formatCode(file),
-        ),
+        this.formatSection(`Changed File: ${file.relativePath}`, this.formatCode(file)),
       );
     }
 
     for (const file of context.importedFiles) {
       sections.push(
-        this.formatSection(
-          `Imported File: ${file.relativePath}`,
-          this.formatCode(file),
-        ),
+        this.formatSection(`Imported File: ${file.relativePath}`, this.formatCode(file)),
       );
     }
 

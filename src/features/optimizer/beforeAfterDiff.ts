@@ -60,7 +60,9 @@ export class BeforeAfterDiff {
       lines.push(`  Changed files: ${original.changedFiles.map((f) => f.relativePath).join(', ')}`);
     }
     if (original.importedFiles.length > 0) {
-      lines.push(`  Imported files: ${original.importedFiles.map((f) => f.relativePath).join(', ')}`);
+      lines.push(
+        `  Imported files: ${original.importedFiles.map((f) => f.relativePath).join(', ')}`,
+      );
     }
     if (original.readme) {
       lines.push(`  README: included`);

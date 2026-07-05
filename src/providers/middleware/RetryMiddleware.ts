@@ -18,9 +18,11 @@ function sleep(ms: number): Promise<void> {
 function isRetryable(err: unknown): boolean {
   // Don't retry on authentication failures, not-implemented stubs, or validation errors
   if (err instanceof TokenFlowError) {
-    return err.code !== TokenFlowErrorCode.PROVIDER_NOT_CONFIGURED
-      && err.code !== TokenFlowErrorCode.NOT_IMPLEMENTED
-      && err.code !== TokenFlowErrorCode.GIT_NOT_AVAILABLE;
+    return (
+      err.code !== TokenFlowErrorCode.PROVIDER_NOT_CONFIGURED &&
+      err.code !== TokenFlowErrorCode.NOT_IMPLEMENTED &&
+      err.code !== TokenFlowErrorCode.GIT_NOT_AVAILABLE
+    );
   }
   // Retry on network errors (fetch failures, timeouts)
   return true;
@@ -65,9 +67,12 @@ export class RetryMiddleware extends ProviderMiddleware {
     }
 
     // Should never reach here, but TypeScript needs this
-    throw lastError ?? new TokenFlowError(
-      'RetryMiddleware exhausted all attempts.',
-      TokenFlowErrorCode.PROVIDER_API_ERROR,
+    throw (
+      lastError ??
+      new TokenFlowError(
+        'RetryMiddleware exhausted all attempts.',
+        TokenFlowErrorCode.PROVIDER_API_ERROR,
+      )
     );
   }
 }

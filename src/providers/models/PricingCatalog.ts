@@ -172,10 +172,16 @@ export class PricingCatalog {
   /** Returns the pricing entry for a model ID, or a reasonable fallback. */
   static forModel(modelId: string): PricingEntry {
     // Ollama models are always free (local inference)
-    if (modelId.includes(':') && !modelId.startsWith('google/') && !modelId.startsWith('qwen/') &&
-        !modelId.startsWith('deepseek/') && !modelId.startsWith('meta-llama/') &&
-        !modelId.startsWith('mistralai/') && !modelId.startsWith('anthropic/') &&
-        !modelId.startsWith('openai/')) {
+    if (
+      modelId.includes(':') &&
+      !modelId.startsWith('google/') &&
+      !modelId.startsWith('qwen/') &&
+      !modelId.startsWith('deepseek/') &&
+      !modelId.startsWith('meta-llama/') &&
+      !modelId.startsWith('mistralai/') &&
+      !modelId.startsWith('anthropic/') &&
+      !modelId.startsWith('openai/')
+    ) {
       // Simple heuristic: Ollama local models don't have provider-style prefixes
       return FREE_PRICING;
     }

@@ -41,10 +41,7 @@ export interface RequestFailedEvent {
 
 /** Discriminated union of all provider events. */
 export type ProviderEvent =
-  | RequestStartedEvent
-  | RequestChunkEvent
-  | RequestCompletedEvent
-  | RequestFailedEvent;
+  RequestStartedEvent | RequestChunkEvent | RequestCompletedEvent | RequestFailedEvent;
 
 // ─── Event bus ───────────────────────────────────────────────────────────────
 

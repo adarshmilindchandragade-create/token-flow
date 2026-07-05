@@ -112,19 +112,16 @@ export class OpenRouterProvider extends BaseProvider {
     const messages = this.buildOpenRouterMessages(request);
     const model = request.model ?? this.modelId;
 
-    const res = await this.fetchRaw(
-      `${OpenRouterProvider.BASE_URL}/chat/completions`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          model,
-          messages: this.buildOpenRouterMessages(request),
-          max_tokens: request.maxTokens ?? 4096,
-          temperature: request.temperature,
-          stream: true,
-        }),
-      },
-    );
+    const res = await this.fetchRaw(`${OpenRouterProvider.BASE_URL}/chat/completions`, {
+      method: 'POST',
+      body: JSON.stringify({
+        model,
+        messages: this.buildOpenRouterMessages(request),
+        max_tokens: request.maxTokens ?? 4096,
+        temperature: request.temperature,
+        stream: true,
+      }),
+    });
 
     let fullContent = '';
     let finalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -203,7 +200,7 @@ export class OpenRouterProvider extends BaseProvider {
 
   private authHeaders(): Record<string, string> {
     return {
-      'Authorization': `Bearer ${this.apiKey}`,
+      Authorization: `Bearer ${this.apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'https://github.com/tokenflow-ai/tokenflow-ai',
       'X-Title': 'TokenFlow AI',
@@ -224,7 +221,7 @@ export class OpenRouterProvider extends BaseProvider {
   private async fetchRaw(url: string, options: RequestInit): Promise<Response> {
     const res = await fetch(url, {
       ...options,
-      headers: { ...this.authHeaders(), ...(options.headers as Record<string, string> ?? {}) },
+      headers: { ...this.authHeaders(), ...((options.headers as Record<string, string>) ?? {}) },
       signal: AbortSignal.timeout(60_000),
     });
 

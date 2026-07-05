@@ -46,12 +46,18 @@ export const Uri = {
 export const ViewColumn = { One: 1, Beside: 2 };
 export const ProgressLocation = { Notification: 15 };
 export const StatusBarAlignment = { Right: 2, Left: 1 };
-export const ThemeColor = class ThemeColor { constructor(public id: string) {} };
-export const MarkdownString = class MarkdownString { constructor(public value: string) {} };
+export const ThemeColor = class ThemeColor {
+  constructor(public id: string) {}
+};
+export const MarkdownString = class MarkdownString {
+  constructor(public value: string) {}
+};
 
 export class Disposable {
   constructor(private callOnDispose: () => void) {}
-  dispose() { this.callOnDispose(); }
+  dispose() {
+    this.callOnDispose();
+  }
 }
 
 export const SecretStorage = {};

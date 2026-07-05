@@ -56,7 +56,10 @@ export class ProviderRegistry {
       this.logger.info(`Provider initialized: ${providerName} / ${modelId}`);
       return true;
     } catch (err) {
-      if (err instanceof TokenFlowError && err.code === TokenFlowErrorCode.PROVIDER_NOT_CONFIGURED) {
+      if (
+        err instanceof TokenFlowError &&
+        err.code === TokenFlowErrorCode.PROVIDER_NOT_CONFIGURED
+      ) {
         this.logger.warn(err.message);
       } else {
         this.logger.error('Provider initialization failed', err instanceof Error ? err : undefined);

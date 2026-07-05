@@ -38,19 +38,13 @@ export class WorkspaceReader implements IContextPort {
       includeReadme ? this.getReadme() : Promise.resolve(null),
     ]);
 
-    const changedFiles = await this.readFiles(
-      this.filter.filterFiles(gitResult.changedFiles),
-    );
+    const changedFiles = await this.readFiles(this.filter.filterFiles(gitResult.changedFiles));
 
     // Avoid re-reading the active file if it's also in changedFiles
     const activeFilePath = activeFile?.path;
-    const filteredChangedFiles = changedFiles.filter(
-      (f) => f.path !== activeFilePath,
-    );
+    const filteredChangedFiles = changedFiles.filter((f) => f.path !== activeFilePath);
 
-    const importedFiles = activeFile
-      ? await this.getImportedFiles(activeFile)
-      : [];
+    const importedFiles = activeFile ? await this.getImportedFiles(activeFile) : [];
 
     return {
       activeFile,

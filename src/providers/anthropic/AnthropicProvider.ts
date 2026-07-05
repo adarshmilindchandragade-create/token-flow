@@ -102,10 +102,7 @@ export class AnthropicProvider extends BaseProvider {
       });
 
       for await (const event of stream) {
-        if (
-          event.type === 'content_block_delta' &&
-          event.delta.type === 'text_delta'
-        ) {
+        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
           const delta = event.delta.text;
           fullContent += delta;
           onChunk(delta);

@@ -100,7 +100,9 @@ describe('ContextBuilder.serializeContext()', () => {
         content: 'const a = 1;',
       },
       changedFiles: [{ path: '/proj/src/b.ts', relativePath: 'src/b.ts', content: 'const b = 2;' }],
-      importedFiles: [{ path: '/proj/src/c.ts', relativePath: 'src/c.ts', content: 'const c = 3;' }],
+      importedFiles: [
+        { path: '/proj/src/c.ts', relativePath: 'src/c.ts', content: 'const c = 3;' },
+      ],
       readme: { path: '/proj/README.md', relativePath: 'README.md', content: '# Proj' },
       gitDiff: 'diff --git a/x b/x',
       gitDiffFiles: [],

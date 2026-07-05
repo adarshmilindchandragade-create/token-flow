@@ -43,10 +43,7 @@ export function calculateCost(
 }
 
 /** Combines two SessionTokenUsage records (e.g., for multi-session aggregation). */
-export function mergeSessionUsage(
-  a: SessionTokenUsage,
-  b: SessionTokenUsage,
-): SessionTokenUsage {
+export function mergeSessionUsage(a: SessionTokenUsage, b: SessionTokenUsage): SessionTokenUsage {
   return {
     totalInputTokens: a.totalInputTokens + b.totalInputTokens,
     totalOutputTokens: a.totalOutputTokens + b.totalOutputTokens,

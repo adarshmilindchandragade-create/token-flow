@@ -61,10 +61,7 @@ export class ProviderFactory {
    * Constructs a bare provider instance (no middleware).
    * Exported for testing — prefer create() in production code.
    */
-  static async createRaw(
-    config: ProviderConfig,
-    secretStore: ISecretStore,
-  ): Promise<IProvider> {
+  static async createRaw(config: ProviderConfig, secretStore: ISecretStore): Promise<IProvider> {
     const { name, modelId } = config;
 
     switch (name) {

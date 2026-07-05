@@ -3,7 +3,10 @@
 
 import * as vscode from 'vscode';
 import type { IOptimizerPort } from '../../core/application/ports/IContextPort';
-import type { WorkspaceContext, OptimizedContext } from '../../core/domain/entities/WorkspaceContext';
+import type {
+  WorkspaceContext,
+  OptimizedContext,
+} from '../../core/domain/entities/WorkspaceContext';
 import { ContextBuilder } from '../context/contextBuilder';
 import { TokenCounter } from '../tokenMonitor/tokenCounter';
 
@@ -45,8 +48,7 @@ export class TokenOptimizer implements IOptimizerPort {
 
     const optimizedTokenCount = this.counter.count(optimized);
     const savedTokens = Math.max(0, rawTokenCount - optimizedTokenCount);
-    const savingsPercent =
-      rawTokenCount > 0 ? Math.round((savedTokens / rawTokenCount) * 100) : 0;
+    const savingsPercent = rawTokenCount > 0 ? Math.round((savedTokens / rawTokenCount) * 100) : 0;
 
     return Promise.resolve({
       original: context,

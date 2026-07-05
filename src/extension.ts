@@ -63,8 +63,12 @@ export function activate(context: vscode.ExtensionContext): void {
   // ─── Hot-switch: re-initialize on settings change ─────────────────────────
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(async (e) => {
-      if (e.affectsConfiguration('tokenflow.provider') || e.affectsConfiguration('tokenflow.model') ||
-          e.affectsConfiguration('tokenflow.openrouterModel') || e.affectsConfiguration('tokenflow.ollamaModel')) {
+      if (
+        e.affectsConfiguration('tokenflow.provider') ||
+        e.affectsConfiguration('tokenflow.model') ||
+        e.affectsConfiguration('tokenflow.openrouterModel') ||
+        e.affectsConfiguration('tokenflow.ollamaModel')
+      ) {
         logger.info('TokenFlow configuration changed — reinitializing provider...');
         const initialized = await providerRegistry.initialize();
         if (initialized) {
@@ -150,25 +154,25 @@ export function activate(context: vscode.ExtensionContext): void {
 
             // Show optimization savings
             const report = diffBuilder.buildReport(optimized);
-            void vscode.window.showInformationMessage(
-              `⚡ TokenFlow: ${report.savedTokens.toLocaleString()} tokens saved (${report.savingsPercent}%) · ` +
-                `Cost: ${
-                  response.usage.estimatedCostUsd < 0.001
-                    ? '<$0.001'
-                    : `$${response.usage.estimatedCostUsd.toFixed(4)}`
-                }`,
-              'Show Monitor',
-            ).then((action) => {
-              if (action === 'Show Monitor') {
-                TokenMonitorPanel.createOrShow(context.extensionUri, sessionStats);
-              }
-            });
+            void vscode.window
+              .showInformationMessage(
+                `⚡ TokenFlow: ${report.savedTokens.toLocaleString()} tokens saved (${report.savingsPercent}%) · ` +
+                  `Cost: ${
+                    response.usage.estimatedCostUsd < 0.001
+                      ? '<$0.001'
+                      : `$${response.usage.estimatedCostUsd.toFixed(4)}`
+                  }`,
+                'Show Monitor',
+              )
+              .then((action) => {
+                if (action === 'Show Monitor') {
+                  TokenMonitorPanel.createOrShow(context.extensionUri, sessionStats);
+                }
+              });
           },
         );
       } catch (err) {
-        const message = isTokenFlowError(err)
-          ? err.message
-          : `Unexpected error: ${String(err)}`;
+        const message = isTokenFlowError(err) ? err.message : `Unexpected error: ${String(err)}`;
         void vscode.window.showErrorMessage(`TokenFlow: ${message}`);
         statusBar.setError();
         logger.error('Send prompt failed', err instanceof Error ? err : undefined);
@@ -237,21 +241,24 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // ─── Auto-initialize provider on activation ───────────────────────────────
-  void providerRegistry.initialize().then((initialized) => {
-    if (initialized) {
-      const provider = providerRegistry.getActiveProvider();
-      if (provider) {
-        statusBar.setProvider(provider.name, provider.modelId);
-        logger.info(`Provider ready: ${provider.name} / ${provider.modelId}`);
+  void providerRegistry
+    .initialize()
+    .then((initialized) => {
+      if (initialized) {
+        const provider = providerRegistry.getActiveProvider();
+        if (provider) {
+          statusBar.setProvider(provider.name, provider.modelId);
+          logger.info(`Provider ready: ${provider.name} / ${provider.modelId}`);
+        }
+      } else {
+        logger.info(
+          'No provider configured. Run "TokenFlow: Select Provider" or "TokenFlow: Set API Key".',
+        );
       }
-    } else {
-      logger.info(
-        'No provider configured. Run "TokenFlow: Select Provider" or "TokenFlow: Set API Key".',
-      );
-    }
-  }).catch((err: Error) => {
-    logger.error('Provider auto-initialization failed', err);
-  });
+    })
+    .catch((err: Error) => {
+      logger.error('Provider auto-initialization failed', err);
+    });
 
   // Suppress unused import lint warning (secretStorage used by SessionStatsService)
   void secretStorage;
