@@ -14,7 +14,7 @@ import type { AIRequest, AIResponse } from '../core/domain/AIRequest';
 
 describe('ModelCatalog', () => {
   it('returns the correct entry for a known model', () => {
-    const entry = ModelCatalog.getModel('google/gemma-3-12b-it:free');
+    const entry = ModelCatalog.getModel('meta-llama/llama-3.1-8b-instruct:free');
     expect(entry).toBeDefined();
     expect(entry!.isFree).toBe(true);
     expect(entry!.provider).toBe('openrouter');
@@ -29,9 +29,9 @@ describe('ModelCatalog', () => {
     expect(defaultId).toBe('claude-3-5-sonnet-20241022');
   });
 
-  it('returns the default OpenRouter model as the free Gemma model', () => {
+  it('returns the default OpenRouter model as openrouter/free (auto-router)', () => {
     const defaultId = ModelCatalog.getDefaultModelId('openrouter');
-    expect(defaultId).toBe('google/gemma-3-12b-it:free');
+    expect(defaultId).toBe('openrouter/free');
   });
 
   it('returns free models only for getFreeModels()', () => {

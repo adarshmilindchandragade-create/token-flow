@@ -1,18 +1,15 @@
 // src/providers/openrouter/OpenRouterProvider.ts — OpenRouter provider (primary dev provider)
-// Uses OpenAI-compatible API. Supports 50+ models including free tier.
-// No additional SDK needed — uses native fetch with Authorization + HTTP-Referer headers.
+// Uses OpenAI-compatible API. Supports 400+ models including free tier.
+// Default model: "openrouter/free" — OpenRouter auto-selects the best available free model.
+// Falls back through ranked free models on 404 (model removed/changed).
 
 import type { AIRequest, AIResponse, StreamChunkHandler } from '../../core/domain/AIRequest';
 import type { ProviderCapabilities } from '../base/ProviderCapabilities';
 import { BaseProvider } from '../base/BaseProvider';
 import { ModelCatalog } from '../models/ModelCatalog';
 import { TokenFlowError, TokenFlowErrorCode } from '../../shared/errors/TokenFlowError';
-
-/** OpenAI-compatible message format used by the OpenRouter API. */
-interface OpenRouterMessage {
-  role: string;
-  content: string;
-}
+import { OpenRouterModelDiscovery } from './OpenRouterModelDiscovery';
+import { Logger } from '../../shared/utils/logger';
 
 /** OpenRouter /chat/completions response (subset). */
 interface OpenRouterResponse {
@@ -42,15 +39,31 @@ interface OpenRouterStreamChunk {
   };
 }
 
+/** Error body from OpenRouter — used to detect recoverable 404s. */
+interface OpenRouterErrorBody {
+  error?: {
+    message?: string;
+    code?: number;
+  };
+}
+
 export class OpenRouterProvider extends BaseProvider {
   static readonly BASE_URL = 'https://openrouter.ai/api/v1';
-  static readonly DEFAULT_MODEL = 'google/gemma-3-12b-it:free';
 
+  /**
+   * "openrouter/free" is OpenRouter's built-in free router.
+   * It automatically selects an available free model and updates as the
+   * free catalog changes — no hardcoded model slug needed.
+   * See: https://openrouter.ai/openrouter/free
+   */
+  static readonly DEFAULT_MODEL = 'openrouter/free';
+
+  private readonly logger = Logger.getInstance();
   readonly name = 'openrouter' as const;
 
   readonly capabilities: ProviderCapabilities = {
     streaming: true,
-    vision: false, // depends on model — override per-request if needed
+    vision: false,
     thinking: false,
     tools: false,
     embeddings: false,
@@ -73,14 +86,114 @@ export class OpenRouterProvider extends BaseProvider {
   async send(request: AIRequest): Promise<AIResponse> {
     const start = Date.now();
     const model = request.model ?? this.modelId;
+    return this.sendWithFallback(request, model, start, false, undefined);
+  }
 
+  async stream(request: AIRequest, onChunk: StreamChunkHandler): Promise<AIResponse> {
+    const start = Date.now();
+    const model = request.model ?? this.modelId;
+    return this.sendWithFallback(request, model, start, true, onChunk);
+  }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      const res = await fetch(`${OpenRouterProvider.BASE_URL}/models`, {
+        headers: this.authHeaders(),
+        signal: AbortSignal.timeout(5_000),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  // ─── Auto-fallback logic ──────────────────────────────────────────────────
+
+  /**
+   * Sends a request with automatic fallback on 404 (model removed / no longer free).
+   * Strategy:
+   *   1. Try requested model
+   *   2. On 404 → discover free models via API → try each in ranked order
+   *   3. If all fail → throw the original error
+   */
+  private async sendWithFallback(
+    request: AIRequest,
+    model: string,
+    start: number,
+    isStream: boolean,
+    onChunk: StreamChunkHandler | undefined,
+    attempt = 0,
+    fallbackModels?: string[],
+  ): Promise<AIResponse> {
+    try {
+      if (isStream && onChunk) {
+        return await this.doStream(request, model, start, onChunk);
+      }
+      return await this.doSend(request, model, start);
+    } catch (err) {
+      if (this.isModelUnavailableError(err) && attempt < 3) {
+        const models = fallbackModels ?? (await this.discoverFallbackModels(model));
+        const next = models[attempt];
+
+        if (next) {
+          this.logger.warn(
+            `[OpenRouter] Model ${model} unavailable (attempt ${attempt + 1}). Falling back to ${next}`,
+          );
+          return this.sendWithFallback(
+            request,
+            next,
+            start,
+            isStream,
+            onChunk,
+            attempt + 1,
+            models,
+          );
+        }
+      }
+      throw err;
+    }
+  }
+
+  private async discoverFallbackModels(excludeId: string): Promise<string[]> {
+    try {
+      const ranked = await OpenRouterModelDiscovery.getrankedFreeModels(this.apiKey);
+      return ranked
+        .map((m) => m.id)
+        .filter((id) => id !== excludeId)
+        .slice(0, 3); // top 3 alternatives
+    } catch {
+      // If discovery fails, try these reliable fallbacks in order
+      return [
+        'meta-llama/llama-3.1-8b-instruct:free',
+        'mistralai/mistral-7b-instruct:free',
+        'openrouter/free',
+      ].filter((id) => id !== excludeId);
+    }
+  }
+
+  private isModelUnavailableError(err: unknown): boolean {
+    if (err instanceof TokenFlowError) {
+      const msg = err.message.toLowerCase();
+      return (
+        msg.includes('404') ||
+        msg.includes('not found') ||
+        msg.includes('unavailable') ||
+        msg.includes('no longer free')
+      );
+    }
+    return false;
+  }
+
+  // ─── Core request methods ─────────────────────────────────────────────────
+
+  private async doSend(request: AIRequest, model: string, start: number): Promise<AIResponse> {
     const res = await this.fetchJson<OpenRouterResponse>(
       `${OpenRouterProvider.BASE_URL}/chat/completions`,
       {
         method: 'POST',
         body: JSON.stringify({
           model,
-          messages: this.buildOpenRouterMessages(request),
+          messages: this.buildMessages(request),
           max_tokens: request.maxTokens ?? 4096,
           temperature: request.temperature,
           stream: false,
@@ -107,16 +220,18 @@ export class OpenRouterProvider extends BaseProvider {
     };
   }
 
-  async stream(request: AIRequest, onChunk: StreamChunkHandler): Promise<AIResponse> {
-    const start = Date.now();
-    const messages = this.buildOpenRouterMessages(request);
-    const model = request.model ?? this.modelId;
-
+  private async doStream(
+    request: AIRequest,
+    model: string,
+    start: number,
+    onChunk: StreamChunkHandler,
+  ): Promise<AIResponse> {
+    const messages = this.buildMessages(request);
     const res = await this.fetchRaw(`${OpenRouterProvider.BASE_URL}/chat/completions`, {
       method: 'POST',
       body: JSON.stringify({
         model,
-        messages: this.buildOpenRouterMessages(request),
+        messages,
         max_tokens: request.maxTokens ?? 4096,
         temperature: request.temperature,
         stream: true,
@@ -184,19 +299,7 @@ export class OpenRouterProvider extends BaseProvider {
     };
   }
 
-  async isAvailable(): Promise<boolean> {
-    try {
-      const res = await fetch(`${OpenRouterProvider.BASE_URL}/models`, {
-        headers: this.authHeaders(),
-        signal: AbortSignal.timeout(5_000),
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  // ─── Private helpers ──────────────────────────────────────────────────────
+  // ─── Private helpers ───────────────────────────────────────────────────────
 
   private authHeaders(): Record<string, string> {
     return {
@@ -205,17 +308,6 @@ export class OpenRouterProvider extends BaseProvider {
       'HTTP-Referer': 'https://github.com/tokenflow-ai/tokenflow-ai',
       'X-Title': 'TokenFlow AI',
     };
-  }
-
-  private buildOpenRouterMessages(request: AIRequest): OpenRouterMessage[] {
-    const messages: OpenRouterMessage[] = [];
-    if (request.systemPrompt) {
-      messages.push({ role: 'system', content: request.systemPrompt });
-    }
-    for (const msg of request.messages) {
-      messages.push({ role: msg.role, content: msg.content });
-    }
-    return messages;
   }
 
   private async fetchRaw(url: string, options: RequestInit): Promise<Response> {
@@ -227,8 +319,16 @@ export class OpenRouterProvider extends BaseProvider {
 
     if (!res.ok) {
       const body = await res.text().catch(() => '');
+      // Attempt to parse structured error for better fallback detection
+      let parsed: OpenRouterErrorBody = {};
+      try {
+        parsed = JSON.parse(body) as OpenRouterErrorBody;
+      } catch {
+        /* ignore */
+      }
+      const message = parsed.error?.message ?? res.statusText;
       throw new TokenFlowError(
-        `OpenRouter API error ${res.status}: ${res.statusText}. ${body}`,
+        `OpenRouter API error ${res.status}: ${message}. ${body}`,
         TokenFlowErrorCode.PROVIDER_API_ERROR,
       );
     }

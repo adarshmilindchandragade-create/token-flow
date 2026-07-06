@@ -1,17 +1,21 @@
 // src/providers/models/openrouter.models.ts — OpenRouter model catalog entries
-// OpenRouter exposes 50+ models through a single OpenAI-compatible endpoint.
-// Free models (isFree: true) cost $0 — marked with ':free' suffix.
-// Pricing verified: 2026-07-06. Note: gemma-3-12b-it:free was removed by OpenRouter.
+// Static catalog covers well-known paid/premium models and the free router.
+// Free model selection is handled dynamically by OpenRouterModelDiscovery.
+// Pricing verified: 2026-07-06.
 
 import type { ModelEntry } from './ModelCatalog';
 
 export const OPENROUTER_MODELS: ModelEntry[] = [
-  // ─── Free Tier ────────────────────────────────────────────────────────────
+  // ─── Free Router (default) ─────────────────────────────────────────────────
+  // "openrouter/free" is OpenRouter's built-in auto-selector.
+  // It routes to the best currently-available free model automatically.
+  // No slug updates needed when OpenRouter changes their free catalog.
+  // See: https://openrouter.ai/openrouter/free
   {
-    id: 'google/gemma-3-12b-it',
-    displayName: 'Gemma 3 12B (Paid)',
+    id: 'openrouter/free',
+    displayName: 'Free (Auto-selected by OpenRouter)',
     provider: 'openrouter',
-    contextWindow: 32_768,
+    contextWindow: 131_072,
     capabilities: {
       streaming: true,
       vision: false,
@@ -19,7 +23,24 @@ export const OPENROUTER_MODELS: ModelEntry[] = [
       tools: false,
       embeddings: false,
     },
-    isFree: false,
+    isFree: true,
+    isDefault: true,
+  },
+
+  // ─── Known free models (discovery populates the full list at runtime) ──────
+  {
+    id: 'meta-llama/llama-3.1-8b-instruct:free',
+    displayName: 'Llama 3.1 8B Instruct (Free)',
+    provider: 'openrouter',
+    contextWindow: 131_072,
+    capabilities: {
+      streaming: true,
+      vision: false,
+      thinking: false,
+      tools: false,
+      embeddings: false,
+    },
+    isFree: true,
   },
   {
     id: 'qwen/qwen3-8b:free',
@@ -50,21 +71,6 @@ export const OPENROUTER_MODELS: ModelEntry[] = [
     isFree: true,
   },
   {
-    id: 'meta-llama/llama-3.1-8b-instruct:free',
-    displayName: 'Llama 3.1 8B Instruct (Free)',
-    provider: 'openrouter',
-    contextWindow: 131_072,
-    capabilities: {
-      streaming: true,
-      vision: false,
-      thinking: false,
-      tools: false,
-      embeddings: false,
-    },
-    isFree: true,
-    isDefault: true,
-  },
-  {
     id: 'mistralai/mistral-7b-instruct:free',
     displayName: 'Mistral 7B Instruct (Free)',
     provider: 'openrouter',
@@ -78,7 +84,8 @@ export const OPENROUTER_MODELS: ModelEntry[] = [
     },
     isFree: true,
   },
-  // ─── Paid Tier (via OpenRouter) ───────────────────────────────────────────
+
+  // ─── Premium models (via OpenRouter, billed to user's OR account) ──────────
   {
     id: 'anthropic/claude-3.5-sonnet',
     displayName: 'Claude 3.5 Sonnet (via OpenRouter)',
@@ -109,13 +116,27 @@ export const OPENROUTER_MODELS: ModelEntry[] = [
   },
   {
     id: 'qwen/qwen3-235b-a22b',
-    displayName: 'Qwen 3 235B',
+    displayName: 'Qwen 3 235B (via OpenRouter)',
     provider: 'openrouter',
     contextWindow: 131_072,
     capabilities: {
       streaming: true,
       vision: false,
       thinking: true,
+      tools: false,
+      embeddings: false,
+    },
+    isFree: false,
+  },
+  {
+    id: 'google/gemma-3-12b-it',
+    displayName: 'Gemma 3 12B (via OpenRouter)',
+    provider: 'openrouter',
+    contextWindow: 32_768,
+    capabilities: {
+      streaming: true,
+      vision: false,
+      thinking: false,
       tools: false,
       embeddings: false,
     },
