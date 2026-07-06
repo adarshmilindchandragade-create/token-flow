@@ -1,5 +1,6 @@
 // src/providers/anthropic/AnthropicProvider.ts — Anthropic Claude provider (production)
-// Uses @anthropic-ai/sdk. Moved from src/features/providers/ and upgraded to extend BaseProvider.
+// Uses @anthropic-ai/sdk. v1.2: overrides countTokens() with the real count_tokens
+// endpoint instead of BaseProvider's chars/4 fallback (see KNOWN_ISSUES.md).
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { AIRequest, AIResponse, StreamChunkHandler } from '../../core/domain/AIRequest';
@@ -23,7 +24,6 @@ export class AnthropicProvider extends BaseProvider {
   ) {
     super();
     this.client = new Anthropic({ apiKey });
-    // Pull capabilities from catalog; fall back to sensible defaults
     this.capabilities = ModelCatalog.getModel(modelId)?.capabilities ?? {
       streaming: true,
       vision: true,
@@ -140,7 +140,6 @@ export class AnthropicProvider extends BaseProvider {
 
   async isAvailable(): Promise<boolean> {
     try {
-      // Cheapest valid probe: create a 1-token request
       await this.client.messages.create({
         model: this.modelId,
         max_tokens: 1,
@@ -149,6 +148,30 @@ export class AnthropicProvider extends BaseProvider {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  /**
+   * Overrides BaseProvider's chars/4 heuristic with Anthropic's real token-counting
+   * endpoint. As of @anthropic-ai/sdk ^0.32.0 this endpoint lives under the `beta`
+   * namespace (client.beta.messages.countTokens) — it has since been promoted to
+   * stable in newer SDK releases, so this override should move to
+   * `client.messages.countTokens(...)` once the SDK dependency is upgraded past
+   * the point where that method is stable (verify via CHANGELOG before upgrading).
+   *
+   * Falls back to the inherited heuristic on any failure (network error, rate
+   * limit, unsupported model) so a counting failure never blocks the caller —
+   * accurate-but-unavailable is worse than approximate-but-working here.
+   */
+  override async countTokens(text: string): Promise<number> {
+    try {
+      const response = await this.client.beta.messages.countTokens({
+        model: this.modelId,
+        messages: [{ role: 'user', content: text }],
+      });
+      return response.input_tokens;
+    } catch {
+      return super.countTokens(text);
     }
   }
 }

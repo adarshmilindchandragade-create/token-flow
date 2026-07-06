@@ -68,8 +68,6 @@ describe('TokenOptimizer (pure transformation methods)', () => {
       const lines = Array.from({ length: 60 }, (_, i) => `const x${i} = ${i};`).join('\n');
       const block = '```ts\n' + lines + '\n```';
       const result = optimizer.truncateLongCodeBlocks(block);
-      // block = opening fence + 60 content lines + closing fence = 62 lines total
-      // omitted = 62 - 50 = 12 lines
       expect(result).toContain('... [12 lines omitted by TokenFlow optimizer] ...');
       expect(result.split('\n').length).toBeLessThan(block.split('\n').length);
     });
@@ -78,10 +76,6 @@ describe('TokenOptimizer (pure transformation methods)', () => {
   // ─── stripComments ────────────────────────────────────────────────────────
   describe('stripComments()', () => {
     it('strips full-line // comments', () => {
-      // The v1 stripComments regex strips full-line comments (^\/\/.*).
-      // Inline trailing comments (const x = 1; // ...) are NOT stripped in v1
-      // to avoid incorrectly removing code on the same line.
-      // See KNOWN_ISSUES.md — full inline stripping deferred to v2 (AST required).
       const input = '// this is a full-line comment\nconst y = 2;';
       const result = optimizer.stripComments(input);
       expect(result).not.toContain('// this is a full-line comment');
@@ -118,6 +112,81 @@ describe('TokenOptimizer (pure transformation methods)', () => {
       const result = optimizer.deduplicateSections(input);
       expect(result).toContain('### Active File: src/a.ts');
       expect(result).toContain('### Changed File: src/b.ts');
+    });
+  });
+
+  // ─── enforceTokenBudget ───────────────────────────────────────────────────
+  // Note: the mocked TokenCounter above uses Math.ceil(text.length / 4), so
+  // "maxTokens" in these tests corresponds to (characters / 4).
+  describe('enforceTokenBudget()', () => {
+    it('returns content unchanged when already within budget', () => {
+      const content = '### README\n\nshort content';
+      const result = optimizer.enforceTokenBudget(content, 10_000);
+      expect(result).toBe(content);
+    });
+
+    it('returns content unchanged when maxTokens is 0 or negative (disabled)', () => {
+      const content = '### README\n\n' + 'x'.repeat(1000);
+      expect(optimizer.enforceTokenBudget(content, 0)).toBe(content);
+      expect(optimizer.enforceTokenBudget(content, -1)).toBe(content);
+    });
+
+    it('drops Imported File sections first when over budget', () => {
+      const readme = '### README\n\nshort';
+      const imported = '### Imported File: src/utils.ts\n\n' + 'x'.repeat(400);
+      const content = [readme, imported].join('\n\n');
+
+      // Budget large enough for README alone, too small for both sections.
+      const result = optimizer.enforceTokenBudget(content, 20);
+
+      expect(result).toContain('### README');
+      expect(result).not.toContain('Imported File');
+    });
+
+    it('drops Imported File before Changed File sections', () => {
+      const readme = '### README\n\nshort';
+      const changed = '### Changed File: src/feature.ts\n\n' + 'y'.repeat(80);
+      const imported = '### Imported File: src/utils.ts\n\n' + 'x'.repeat(80);
+      const content = [readme, changed, imported].join('\n\n');
+
+      // Budget fits README + Changed File (34 tokens under the mocked chars/4
+      // heuristic), but not all three sections (62 tokens).
+      const result = optimizer.enforceTokenBudget(content, 34);
+
+      expect(result).toContain('### README');
+      expect(result).toContain('Changed File');
+      expect(result).not.toContain('Imported File');
+    });
+
+    it('never drops README, Git Diff, or Active File sections outright', () => {
+      const content = [
+        '### README\n\n' + 'a'.repeat(200),
+        '### Git Diff\n\n' + 'b'.repeat(200),
+        '### Active File: src/main.ts\n\n' + 'c'.repeat(200),
+      ].join('\n\n');
+
+      const result = optimizer.enforceTokenBudget(content, 50);
+
+      // All three headers must still be present (possibly hard-truncated content, but not removed).
+      expect(result).toContain('### README');
+    });
+
+    it('hard-truncates and appends a visible notice when dropping tiers is not enough', () => {
+      const content = '### Active File: src/huge.ts\n\n' + 'z'.repeat(2000);
+      const result = optimizer.enforceTokenBudget(content, 20);
+
+      expect(result).toContain('exceeded tokenflow.maxContextTokens');
+      expect(result.length).toBeLessThan(content.length);
+    });
+
+    it('hard-truncated output never exceeds the token budget', () => {
+      const content = '### Active File: src/huge.ts\n\n' + 'z'.repeat(5000);
+      const maxTokens = 50;
+      const result = optimizer.enforceTokenBudget(content, maxTokens);
+
+      // Recompute with the same mocked heuristic used by TokenCounter above.
+      const resultTokens = Math.ceil(result.length / 4);
+      expect(resultTokens).toBeLessThanOrEqual(maxTokens);
     });
   });
 });

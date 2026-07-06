@@ -7,7 +7,20 @@ Format: [Unreleased] / [version] — date
 
 ## [Unreleased]
 
-*Nothing pending — v1.1.0 is current.*
+*Nothing pending — v1.2.0 is current.*
+
+---
+
+## [1.2.0] — 2026-07-06
+
+### Fixed
+
+- **`TokenOptimizer` budget enforcement** (`src/features/optimizer/tokenOptimizer.ts`): `tokenflow.maxContextTokens` was read from config but never actually applied — the optimizer always forwarded the full context. Added `enforceTokenBudget()` as a final pipeline stage that drops `Imported File` sections first, then `Changed File` sections, then hard-truncates the remainder with a visible `⚠️ TokenFlow: additional content omitted` notice. Controlled by the existing `tokenflow.maxContextTokens` setting (default `100000`). 7 new unit tests added.
+- **`AnthropicProvider.countTokens()`** (`src/providers/anthropic/AnthropicProvider.ts`): Overrides `BaseProvider`'s `chars/4` heuristic with the real `client.beta.messages.countTokens` Anthropic API endpoint. Falls back silently to the heuristic on any error so a counting failure never blocks the caller. Not yet wired to the UI token display (Phase 2 — tracked in `TODO.md`).
+
+### Tests
+- Added 7 `enforceTokenBudget()` tests to `src/features/optimizer/tokenOptimizer.test.ts`
+- **Total: 91/91 tests passing**
 
 ---
 
