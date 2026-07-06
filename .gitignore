@@ -28,9 +28,8 @@ coverage/
 .n8n/
 postgres-data/
 
-# Editor
+# Editor — exclude personal settings but keep shared debug/task config
 .vscode/settings.json
-.vscode/launch.json
 
 # Dogfooding output (machine-generated)
 .dogfood-results.json
