@@ -48,6 +48,20 @@ export class TokenMonitorPanel {
     TokenMonitorPanel.currentPanel?.sendStats(stats);
   }
 
+  /**
+   * Push optimizer savings data to the webview.
+   * Triggers the `savings-section` bar that has been listening for this
+   * command since v1.0 but was never called (Bug #1).
+   */
+  static updateSavings(savedTokens: number, rawTokenCount: number, savingsPercent: number): void {
+    void TokenMonitorPanel.currentPanel?.panel.webview.postMessage({
+      command: 'savings',
+      savedTokens,
+      rawTokenCount,
+      savingsPercent,
+    });
+  }
+
   // ─── Constructor ─────────────────────────────────────────────────────────
 
   private constructor(

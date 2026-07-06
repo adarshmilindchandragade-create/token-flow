@@ -98,7 +98,7 @@
         "tokenflow.model": {
           "type": "string",
           "default": "",
-          "description": "Model identifier for the selected provider. Leave empty to use the provider default. Use 'TokenFlow: Select Model' for a guided picker."
+          "description": "Model identifier override for the selected provider. When non-empty, takes precedence over tokenflow.openrouterModel, tokenflow.ollamaModel, and the provider catalog default. Leave empty to use the provider-specific setting. Use 'TokenFlow: Select Model' for a guided picker."
         },
         "tokenflow.openrouterModel": {
           "type": "string",
@@ -131,6 +131,18 @@
           "type": "boolean",
           "default": false,
           "description": "Strip code comments from context to reduce token count. Off by default — may affect answer quality."
+        },
+        "tokenflow.softBudgetUsd": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Warn before sending if the estimated request cost exceeds this amount in USD. Set to 0 to disable. Example: 0.05 warns when a single send would cost more than $0.05."
+        },
+        "tokenflow.hardBudgetUsd": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Block sending if the estimated request cost exceeds this amount in USD. Set to 0 to disable. Takes precedence over softBudgetUsd. Example: 0.50 prevents any single send costing more than $0.50."
         }
       }
     },

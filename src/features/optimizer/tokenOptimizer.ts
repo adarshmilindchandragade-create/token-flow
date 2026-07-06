@@ -9,7 +9,7 @@ import type {
   OptimizedContext,
 } from '../../core/domain/entities/WorkspaceContext';
 import { ContextBuilder } from '../context/contextBuilder';
-import { TokenCounter } from '../tokenMonitor/tokenCounter';
+import { TokenCounter } from '../../services/tokenizer/TokenCounter';
 import { DEFAULT_MAX_CONTEXT_TOKENS } from '../../shared/constants';
 
 /**

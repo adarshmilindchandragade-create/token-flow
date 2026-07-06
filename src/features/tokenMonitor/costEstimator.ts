@@ -1,75 +1,39 @@
-// src/features/tokenMonitor/costEstimator.ts — Hardcoded pricing table for v1
+// src/features/tokenMonitor/costEstimator.ts — Delegates to PricingCatalog + ModelCatalog
+//
+// Bug #3 fix: the previous version maintained its own hardcoded pricing table with only
+// 5 Anthropic models. Any non-Anthropic model fell back to contextWindow: 200_000,
+// causing the context-health indicator (🟢/🟡/🔴) to always show green for OpenRouter/
+// Ollama users (e.g., Gemma-12b has a 32,768-token window, not 200K).
+//
+// The table is now deleted. All data is sourced from PricingCatalog (costs) and
+// ModelCatalog (context windows), which already have correct data for all providers.
+// The class is kept as a thin wrapper to preserve call sites in TokenStatusBar and tests.
 
+import { PricingCatalog } from '../../providers/models/PricingCatalog';
+import { ModelCatalog } from '../../providers/models/ModelCatalog';
 import { calculateCost } from '../../core/domain/entities/TokenUsage';
-
-interface ModelPricing {
-  inputCostPerMToken: number; // USD per 1,000,000 input tokens
-  outputCostPerMToken: number; // USD per 1,000,000 output tokens
-  contextWindow: number;
-}
-
-/**
- * Hardcoded pricing table for v1.
- * Updated manually when Anthropic changes pricing.
- * See KNOWN_ISSUES.md for the tradeoff discussion.
- *
- * Source: https://www.anthropic.com/pricing (verified 2026-07-01)
- */
-const MODEL_PRICING: Readonly<Record<string, ModelPricing>> = {
-  // ─── Claude 3.5 family ────────────────────────────────────────────────
-  'claude-3-5-sonnet-20241022': {
-    inputCostPerMToken: 3.0,
-    outputCostPerMToken: 15.0,
-    contextWindow: 200_000,
-  },
-  'claude-3-5-haiku-20241022': {
-    inputCostPerMToken: 0.8,
-    outputCostPerMToken: 4.0,
-    contextWindow: 200_000,
-  },
-  // ─── Claude 3 family ──────────────────────────────────────────────────
-  'claude-3-opus-20240229': {
-    inputCostPerMToken: 15.0,
-    outputCostPerMToken: 75.0,
-    contextWindow: 200_000,
-  },
-  'claude-3-sonnet-20240229': {
-    inputCostPerMToken: 3.0,
-    outputCostPerMToken: 15.0,
-    contextWindow: 200_000,
-  },
-  'claude-3-haiku-20240307': {
-    inputCostPerMToken: 0.25,
-    outputCostPerMToken: 1.25,
-    contextWindow: 200_000,
-  },
-};
-
-/** Fallback when a model is not in the pricing table. */
-const DEFAULT_PRICING: ModelPricing = {
-  inputCostPerMToken: 3.0,
-  outputCostPerMToken: 15.0,
-  contextWindow: 200_000,
-};
 
 /**
  * Estimates cost and retrieves pricing metadata for AI model usage.
+ * Delegates to PricingCatalog and ModelCatalog — no local pricing table.
  * All methods are pure — no I/O, fully testable.
  */
 export class CostEstimator {
-  getPricing(modelId: string): ModelPricing {
-    return MODEL_PRICING[modelId] ?? DEFAULT_PRICING;
-  }
-
+  /**
+   * Returns the context window size for the given model ID.
+   * Uses ModelCatalog for known models; falls back to a conservative 8,192
+   * for truly unknown models (avoids the old 200K Anthropic-only default
+   * that caused incorrect health readings for OpenRouter/Ollama models).
+   */
   getContextWindow(modelId: string): number {
-    return this.getPricing(modelId).contextWindow;
+    return ModelCatalog.getModel(modelId)?.contextWindow ?? 8_192;
   }
 
   /**
    * Returns estimated USD cost for a single request.
    */
   estimateCost(inputTokens: number, outputTokens: number, modelId: string): number {
-    const { inputCostPerMToken, outputCostPerMToken } = this.getPricing(modelId);
+    const { inputCostPerMToken, outputCostPerMToken } = PricingCatalog.forModel(modelId);
     return calculateCost(inputTokens, outputTokens, inputCostPerMToken, outputCostPerMToken);
   }
 

@@ -18,6 +18,7 @@ Open bugs and known limitations. Updated incrementally.
 | No model router | Routing only makes sense with multiple active providers | v2 |
 | No sidebar UI | Status bar + monitor panel sufficient for v1 validation | v2 |
 | Token counting uses cl100k_base for all non-Anthropic models | Anthropic uses a different tokenizer; `AnthropicProvider.countTokens()` now calls the real endpoint (v1.2). Other providers still use estimates. | v2 |
+| Streaming token counts for OpenRouter and Ollama are approximate | When upstream SSE doesn't include `usage` in stream chunks, both providers fall back to `Math.ceil(chars/4)`. Non-streaming (`send()`) is exact via `response.usage`. | v2 |
 | Import scanner is depth-1 only | Full dependency graph is expensive to build for v1 | v2 |
 | Pricing table is hardcoded | Avoids fragile API fetching; goes stale when Anthropic changes prices | v2 |
 | No MCP in extension request path | Unnecessary indirection until a second consumer exists | v2 |

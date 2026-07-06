@@ -29,7 +29,8 @@ describe('CostEstimator.getContextWindow()', () => {
     expect(estimator.getContextWindow('claude-3-5-sonnet-20241022')).toBe(200_000);
   });
 
-  it('returns a positive number for unknown models', () => {
-    expect(estimator.getContextWindow('some-future-model')).toBeGreaterThan(0);
+  it('returns a conservative 8_192 for unknown models (not Anthropic\'s 200K fallback)', () => {
+    // Bug #3 fix: old behavior returned 200_000 for any unknown model
+    expect(estimator.getContextWindow('some-future-model')).toBe(8_192);
   });
 });

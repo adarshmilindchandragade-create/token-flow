@@ -9,6 +9,8 @@ import { SessionStatsService } from './features/storage/sessionStats';
 import { ContextBuilder } from './features/context/contextBuilder';
 import { TokenOptimizer } from './features/optimizer/tokenOptimizer';
 import { BeforeAfterDiff } from './features/optimizer/beforeAfterDiff';
+import { PreflightGuard } from './features/optimizer/PreflightGuard';
+import { PricingCatalog } from './providers/models/PricingCatalog';
 import { Logger } from './shared/utils/logger';
 import { isTokenFlowError } from './shared/errors/TokenFlowError';
 import { ProviderRegistry } from './providers/registry/ProviderRegistry';
@@ -133,6 +135,47 @@ export function activate(context: vscode.ExtensionContext): void {
             const rawContext = await contextBuilder.buildContext();
             const optimized = await optimizer.optimize(rawContext);
 
+            // ─── Preflight guardrails ────────────────────────────────────
+            const preflightConfig = vscode.workspace.getConfiguration('tokenflow');
+            const maxContextTokens = preflightConfig.get<number>('maxContextTokens', 0);
+            const softBudgetUsd = preflightConfig.get<number>('softBudgetUsd', 0);
+            const hardBudgetUsd = preflightConfig.get<number>('hardBudgetUsd', 0);
+
+            // Rule 1 — token ceiling (informational; content already truncated by optimizer)
+            const tokenCheck = PreflightGuard.checkTokenCeiling(
+              optimized.optimizedTokenCount,
+              maxContextTokens,
+            );
+            if (!tokenCheck.pass) {
+              void vscode.window.showWarningMessage(`TokenFlow: ${tokenCheck.message}`);
+            }
+
+            // Rule 2 — cost budget (may block or warn before API call)
+            const estimatedCost = PricingCatalog.estimateCost(
+              provider.modelId,
+              optimized.optimizedTokenCount,
+              0, // output tokens unknown pre-send
+            );
+            const costCheck = PreflightGuard.checkCostBudget(
+              estimatedCost,
+              softBudgetUsd,
+              hardBudgetUsd,
+            );
+            if (!costCheck.pass) {
+              if (costCheck.hardBlock) {
+                void vscode.window.showErrorMessage(`TokenFlow: ${costCheck.message}`);
+                return; // abort send
+              }
+              // Soft block: offer "Send anyway"
+              const action = await vscode.window.showWarningMessage(
+                `TokenFlow: ${costCheck.message}`,
+                'Send anyway',
+                'Cancel',
+              );
+              if (action !== 'Send anyway') return;
+            }
+            // ─────────────────────────────────────────────────────────────
+
             // MetricsMiddleware automatically fires events to eventBus
             // which updates sessionStats + statusBar + TokenMonitorPanel
             const response = await provider.send({
@@ -154,6 +197,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
             // Show optimization savings
             const report = diffBuilder.buildReport(optimized);
+            // Wire the savings bar in the token monitor panel (Bug #1 fix)
+            TokenMonitorPanel.updateSavings(report.savedTokens, report.rawTokenCount, report.savingsPercent);
             void vscode.window
               .showInformationMessage(
                 `⚡ TokenFlow: ${report.savedTokens.toLocaleString()} tokens saved (${report.savingsPercent}%) · ` +
@@ -194,6 +239,9 @@ export function activate(context: vscode.ExtensionContext): void {
             const rawContext = await contextBuilder.buildContext();
             const optimized = await optimizer.optimize(rawContext);
             const report = diffBuilder.buildReport(optimized);
+
+            // Wire the savings bar in the token monitor panel (Bug #1 fix)
+            TokenMonitorPanel.updateSavings(report.savedTokens, report.rawTokenCount, report.savingsPercent);
 
             const content = [
               '# TokenFlow AI — Before/After Comparison',
