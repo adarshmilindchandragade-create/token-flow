@@ -1,15 +1,15 @@
 // src/providers/models/openrouter.models.ts — OpenRouter model catalog entries
 // OpenRouter exposes 50+ models through a single OpenAI-compatible endpoint.
 // Free models (isFree: true) cost $0 — marked with ':free' suffix.
-// Pricing verified: 2026-07-02.
+// Pricing verified: 2026-07-06. Note: gemma-3-12b-it:free was removed by OpenRouter.
 
 import type { ModelEntry } from './ModelCatalog';
 
 export const OPENROUTER_MODELS: ModelEntry[] = [
   // ─── Free Tier ────────────────────────────────────────────────────────────
   {
-    id: 'google/gemma-3-12b-it:free',
-    displayName: 'Gemma 3 12B (Free)',
+    id: 'google/gemma-3-12b-it',
+    displayName: 'Gemma 3 12B (Paid)',
     provider: 'openrouter',
     contextWindow: 32_768,
     capabilities: {
@@ -19,8 +19,7 @@ export const OPENROUTER_MODELS: ModelEntry[] = [
       tools: false,
       embeddings: false,
     },
-    isFree: true,
-    isDefault: true,
+    isFree: false,
   },
   {
     id: 'qwen/qwen3-8b:free',
@@ -63,6 +62,7 @@ export const OPENROUTER_MODELS: ModelEntry[] = [
       embeddings: false,
     },
     isFree: true,
+    isDefault: true,
   },
   {
     id: 'mistralai/mistral-7b-instruct:free',
