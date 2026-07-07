@@ -7,6 +7,7 @@ import { AnthropicProvider } from '../anthropic/AnthropicProvider';
 import { OllamaProvider } from '../ollama/OllamaProvider';
 import { OpenAIProvider } from '../openai/OpenAIProvider';
 import { GeminiProvider } from '../gemini/GeminiProvider';
+import { AutoProviderStrategy, DEFAULT_AUTO_PRIORITY } from '../auto/AutoProviderStrategy';
 import { MetricsMiddleware } from '../middleware/MetricsMiddleware';
 import { RetryMiddleware } from '../middleware/RetryMiddleware';
 import { LoggingMiddleware } from '../middleware/LoggingMiddleware';
@@ -53,7 +54,10 @@ export class ProviderFactory {
     eventBus: ProviderEventBus,
     logger: Logger,
   ): Promise<IProvider> {
-    const raw = await ProviderFactory.createRaw(config, secretStore);
+    const raw = await ProviderFactory.createRaw(config, secretStore, eventBus, logger);
+    // AutoProviderStrategy already wraps its sub-providers with middleware internally;
+    // don't double-wrap it
+    if (raw instanceof AutoProviderStrategy) return raw;
     return ProviderFactory.wrapWithMiddleware(raw, eventBus, logger);
   }
 
@@ -61,10 +65,24 @@ export class ProviderFactory {
    * Constructs a bare provider instance (no middleware).
    * Exported for testing — prefer create() in production code.
    */
-  static async createRaw(config: ProviderConfig, secretStore: ISecretStore): Promise<IProvider> {
+  static async createRaw(
+    config: ProviderConfig,
+    secretStore: ISecretStore,
+    eventBus?: ProviderEventBus,
+    logger?: Logger,
+  ): Promise<IProvider> {
     const { name, modelId } = config;
 
     switch (name) {
+      case 'auto': {
+        if (!eventBus || !logger)
+          throw new TokenFlowError(
+            'auto mode requires eventBus and logger',
+            TokenFlowErrorCode.PROVIDER_NOT_CONFIGURED,
+          );
+        // AutoProviderStrategy builds itself with all available providers
+        return AutoProviderStrategy.build(DEFAULT_AUTO_PRIORITY, secretStore, eventBus, logger);
+      }
       case 'openrouter': {
         const key = await secretStore.getApiKey('openrouter');
         if (!key) throw missingKey('openrouter');
@@ -124,11 +142,12 @@ export class ProviderFactory {
    * Used by SettingsService to render the provider quick-pick.
    */
   static readonly SUPPORTED_PROVIDERS: ProviderName[] = [
+    'auto',
+    'gemini',
     'openrouter',
     'anthropic',
     'ollama',
     'openai',
-    'gemini',
   ];
 
   /**

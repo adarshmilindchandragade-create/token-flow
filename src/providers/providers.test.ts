@@ -165,26 +165,29 @@ describe('ProviderFactory', () => {
     );
   });
 
-  it('creates Gemini stub that throws NOT_IMPLEMENTED on send()', async () => {
-    await secretStore.storeApiKey('gemini', 'AIza-test-key');
+  it('creates GeminiProvider that rejects with PROVIDER_API_ERROR on invalid key', async () => {
+    await secretStore.storeApiKey('gemini', 'AIza-test-key-invalid');
     const provider = await ProviderFactory.createRaw(
       { name: 'gemini', modelId: 'gemini-2.5-flash' },
       secretStore,
     );
     const req: AIRequest = { messages: [{ role: 'user', content: 'test' }] };
+    // Gemini is now fully implemented — it hits the real API and returns PROVIDER_API_ERROR
+    // (not NOT_IMPLEMENTED) when the key is invalid.
     await expect(provider.send(req)).rejects.toSatisfy(
       (err: unknown) =>
-        err instanceof TokenFlowError && err.code === TokenFlowErrorCode.NOT_IMPLEMENTED,
+        err instanceof TokenFlowError && err.code === TokenFlowErrorCode.PROVIDER_API_ERROR,
     );
   });
 
   it('lists all supported providers', () => {
     expect(ProviderFactory.SUPPORTED_PROVIDERS).toEqual([
+      'auto',
+      'gemini',
       'openrouter',
       'anthropic',
       'ollama',
       'openai',
-      'gemini',
     ]);
   });
 });

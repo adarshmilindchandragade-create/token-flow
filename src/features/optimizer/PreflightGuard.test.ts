@@ -55,7 +55,7 @@ describe('PreflightGuard', () => {
     });
 
     it('hard-blocks when cost meets or exceeds hardBudgetUsd', () => {
-      const result = PreflightGuard.checkCostBudget(0.50, 0, 0.50);
+      const result = PreflightGuard.checkCostBudget(0.5, 0, 0.5);
       expect(result.pass).toBe(false);
       expect(result.hardBlock).toBe(true);
       expect(result.message).toContain('blocked');
@@ -63,13 +63,13 @@ describe('PreflightGuard', () => {
 
     it('hard-block takes precedence over soft-warn', () => {
       // cost exceeds both; should be a hard block
-      const result = PreflightGuard.checkCostBudget(1.00, 0.05, 0.50);
+      const result = PreflightGuard.checkCostBudget(1.0, 0.05, 0.5);
       expect(result.pass).toBe(false);
       expect(result.hardBlock).toBe(true);
     });
 
     it('soft-warns when cost is between soft and hard budgets', () => {
-      const result = PreflightGuard.checkCostBudget(0.10, 0.05, 0.50);
+      const result = PreflightGuard.checkCostBudget(0.1, 0.05, 0.5);
       expect(result.pass).toBe(false);
       expect(result.hardBlock).toBe(false);
     });

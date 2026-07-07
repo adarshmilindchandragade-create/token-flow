@@ -78,22 +78,24 @@
       "properties": {
         "tokenflow.provider": {
           "type": "string",
-          "default": "openrouter",
+          "default": "auto",
           "enum": [
+            "auto",
+            "gemini",
             "openrouter",
             "anthropic",
             "ollama",
-            "openai",
-            "gemini"
+            "openai"
           ],
           "enumDescriptions": [
-            "OpenRouter — Free models available, 50+ models via single key (recommended for development)",
+            "Auto — Tries Gemini → OpenRouter → Ollama → Anthropic → OpenAI in order. Falls back automatically on quota/errors. Recommended.",
+            "Google Gemini — AI Studio free tier, generous quotas, 1M token context (gemini-2.5-flash default)",
+            "OpenRouter — 400+ models via single key, free tier auto-router (openrouter/free default)",
             "Anthropic Claude — Highest quality, direct API (recommended for production)",
             "Ollama — Local inference, no API key, works offline",
-            "OpenAI — GPT-4o and o-series (coming in v2)",
-            "Google Gemini — Gemini 2.5 Flash/Pro (coming in v2)"
+            "OpenAI — GPT-4o and o-series"
           ],
-          "description": "AI provider to use. Switch without restarting VS Code."
+          "description": "AI provider to use. 'auto' tries providers in priority order and falls back automatically. Switch without restarting VS Code."
         },
         "tokenflow.model": {
           "type": "string",
@@ -199,6 +201,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
+    "@google/genai": "^2.10.0",
     "js-tiktoken": "^1.0.12"
   },
   "devDependencies": {

@@ -10,11 +10,21 @@ import { ModelCatalog } from '../../providers/models/ModelCatalog';
 
 /** Display metadata for each provider in the quick-pick. */
 const PROVIDER_DISPLAY: Record<ProviderName, { label: string; detail: string }> = {
-  openrouter: { label: '🌐 OpenRouter', detail: 'Free models available · Best for development' },
+  auto: {
+    label: '⚡ Auto',
+    detail: 'Gemini → OpenRouter → Ollama → Anthropic → OpenAI · Falls back automatically',
+  },
+  gemini: {
+    label: '✨ Gemini',
+    detail: 'AI Studio free tier · 1M token context · gemini-2.5-flash default',
+  },
+  openrouter: {
+    label: '🌐 OpenRouter',
+    detail: 'Free models available · 400+ models via single key',
+  },
   anthropic: { label: '🤖 Anthropic', detail: 'Claude Sonnet / Haiku / Opus · Production quality' },
   ollama: { label: '🖥️ Ollama', detail: 'Local inference · No API key · No internet required' },
-  openai: { label: '🧠 OpenAI', detail: 'GPT-4o / o3 / o4-mini · Coming in v2' },
-  gemini: { label: '✨ Gemini', detail: 'Gemini 2.5 Flash / Pro · Coming in v2' },
+  openai: { label: '🧠 OpenAI', detail: 'GPT-4o / o3 / o4-mini' },
 };
 
 /**
@@ -40,11 +50,13 @@ export class SettingsService {
       ProviderFactory.SUPPORTED_PROVIDERS.map((name) => {
         const display = PROVIDER_DISPLAY[name];
         const isOllama = name === 'ollama';
-        const isConfigured = isOllama || configuredSet.has(name);
-        const isStub = name === 'openai' || name === 'gemini';
+        const isAuto = name === 'auto';
+        const isConfigured = isOllama || isAuto || configuredSet.has(name);
+        const isStub = name === 'openai';
 
         let statusIcon = isConfigured ? '🟢' : '🔴';
         if (isOllama) statusIcon = '🌐';
+        if (isAuto) statusIcon = '⚡';
         if (isStub) statusIcon = '⏳';
 
         return {
@@ -142,11 +154,12 @@ export class SettingsService {
 
   private async promptForApiKey(provider: ProviderName): Promise<boolean> {
     const hints: Record<ProviderName, string> = {
-      openrouter: 'sk-or-... (get free key at openrouter.ai)',
+      auto: 'No key for auto — set keys for individual providers (Gemini, OpenRouter, etc.)',
+      gemini: 'AIza... or AQ... (get free key at aistudio.google.com/apikey)',
+      openrouter: 'sk-or-... (get free key at openrouter.ai/keys)',
       anthropic: 'sk-ant-... (console.anthropic.com)',
-      ollama: 'No key needed',
+      ollama: 'No key needed — Ollama runs locally',
       openai: 'sk-... (platform.openai.com)',
-      gemini: 'AIza... (aistudio.google.com)',
     };
 
     const key = await vscode.window.showInputBox({

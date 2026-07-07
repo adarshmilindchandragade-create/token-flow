@@ -177,7 +177,9 @@ export class TokenOptimizer implements IOptimizerPort {
    */
   private dropSectionsByPrefix(content: string, prefixes: string[]): string {
     const sep = TokenOptimizer.SECTION_SEPARATOR;
-    const parts = content.split(sep).map((part) => (part.startsWith('### ') ? part : `### ${part}`));
+    const parts = content
+      .split(sep)
+      .map((part) => (part.startsWith('### ') ? part : `### ${part}`));
 
     const kept = parts.filter((part) => {
       const header = part.replace(/^### /, '').split('\n')[0] ?? '';

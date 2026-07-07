@@ -37,7 +37,7 @@ export class ProviderRegistry {
    */
   async initialize(): Promise<boolean> {
     const config = vscode.workspace.getConfiguration('tokenflow');
-    const providerName = config.get<ProviderName>('provider', 'openrouter');
+    const providerName = config.get<ProviderName>('provider', 'auto');
 
     // Determine the model ID: prefer explicit tokenflow.model setting,
     // fall back to provider-specific setting, then catalog default.

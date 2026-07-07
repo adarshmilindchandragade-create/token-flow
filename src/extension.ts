@@ -140,7 +140,10 @@ export function activate(context: vscode.ExtensionContext): void {
             const maxContextTokens = preflightConfig.get<number>('maxContextTokens', 0);
             const softBudgetUsd = preflightConfig.get<number>('softBudgetUsd', 0);
             const hardBudgetUsd = preflightConfig.get<number>('hardBudgetUsd', 0);
-            const assumedOutputTokens = preflightConfig.get<number>('assumedOutputTokensForBudget', 500);
+            const assumedOutputTokens = preflightConfig.get<number>(
+              'assumedOutputTokensForBudget',
+              500,
+            );
 
             // Rule 1 — token ceiling (informational; content already truncated by optimizer)
             const tokenCheck = PreflightGuard.checkTokenCeiling(
@@ -199,7 +202,11 @@ export function activate(context: vscode.ExtensionContext): void {
             // Show optimization savings
             const report = diffBuilder.buildReport(optimized);
             // Wire the savings bar in the token monitor panel (Bug #1 fix)
-            TokenMonitorPanel.updateSavings(report.savedTokens, report.rawTokenCount, report.savingsPercent);
+            TokenMonitorPanel.updateSavings(
+              report.savedTokens,
+              report.rawTokenCount,
+              report.savingsPercent,
+            );
             void vscode.window
               .showInformationMessage(
                 `⚡ TokenFlow: ${report.savedTokens.toLocaleString()} tokens saved (${report.savingsPercent}%) · ` +
@@ -242,7 +249,11 @@ export function activate(context: vscode.ExtensionContext): void {
             const report = diffBuilder.buildReport(optimized);
 
             // Wire the savings bar in the token monitor panel (Bug #1 fix)
-            TokenMonitorPanel.updateSavings(report.savedTokens, report.rawTokenCount, report.savingsPercent);
+            TokenMonitorPanel.updateSavings(
+              report.savedTokens,
+              report.rawTokenCount,
+              report.savingsPercent,
+            );
 
             const content = [
               '# TokenFlow AI — Before/After Comparison',

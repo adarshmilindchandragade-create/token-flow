@@ -12,7 +12,7 @@ export type { ProviderCapabilities, ProviderHealth };
  * All registered provider names.
  * Adding a new provider: extend this union + add a case to ProviderFactory.
  */
-export type ProviderName = 'openrouter' | 'anthropic' | 'ollama' | 'openai' | 'gemini';
+export type ProviderName = 'auto' | 'openrouter' | 'anthropic' | 'ollama' | 'openai' | 'gemini';
 
 /**
  * Contract for every AI provider adapter.
