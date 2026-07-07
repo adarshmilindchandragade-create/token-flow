@@ -1,7 +1,7 @@
-// src/features/optimizer/PreflightGuard.test.ts — Unit tests for PreflightGuard
+// src/features/optimizer/preflightGuard.test.ts — Unit tests for PreflightGuard
 
 import { describe, it, expect } from 'vitest';
-import { PreflightGuard } from './PreflightGuard';
+import { PreflightGuard } from './preflightGuard';
 
 describe('PreflightGuard', () => {
   // ─── checkTokenCeiling ──────────────────────────────────────────────────────

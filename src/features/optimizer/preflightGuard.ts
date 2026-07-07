@@ -1,4 +1,4 @@
-// src/features/optimizer/PreflightGuard.ts — Pre-send budget guardrails
+// src/features/optimizer/preflightGuard.ts — Pre-send budget guardrails
 //
 // Pure class — no vscode imports. All VS Code UI (warning dialogs, blocking) lives
 // in extension.ts. This class is responsible only for rule evaluation.
