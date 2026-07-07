@@ -10,20 +10,37 @@ import { CostEstimator } from './costEstimator';
 describe('CostEstimator', () => {
   const estimator = new CostEstimator();
 
+  // ─── getPricing ──────────────────────────────────────────────────────────
+  // Returns the composed ModelPricing shape (pricing + contextWindow).
+  // Delegates to PricingCatalog + ModelCatalog — no local table (ADR-005).
+  describe('getPricing()', () => {
+    it('returns correct pricing for claude-3-5-sonnet-20241022', () => {
+      const pricing = estimator.getPricing('claude-3-5-sonnet-20241022');
+      expect(pricing.inputCostPerMToken).toBe(3.0);
+      expect(pricing.outputCostPerMToken).toBe(15.0);
+      expect(pricing.contextWindow).toBe(200_000);
+    });
+
+    it('returns conservative context window for unknown models (not 200_000)', () => {
+      // Bug #3 fix: old fallback was 200_000 (Anthropic's window).
+      // Unknown models now get 8_192 — conservative, not permissive.
+      const pricing = estimator.getPricing('unknown-model-xyz');
+      expect(pricing.inputCostPerMToken).toBeGreaterThanOrEqual(0);
+      expect(pricing.contextWindow).toBe(8_192);
+    });
+  });
+
   // ─── getContextWindow ────────────────────────────────────────────────────
-  // Bug #3 fix: previously delegated to an Anthropic-only local table, so any
-  // non-Anthropic model returned 200_000. Now delegates to ModelCatalog.
   describe('getContextWindow()', () => {
     it('returns 200_000 for claude-3-5-sonnet-20241022', () => {
       expect(estimator.getContextWindow('claude-3-5-sonnet-20241022')).toBe(200_000);
     });
 
     it('returns the correct window for a known OpenRouter model (not 200_000)', () => {
-      // google/gemma-3-12b-it:free has a 32,768-token context window.
-      // Before Bug #3 fix it would return 200_000 (wrong Anthropic fallback).
-      const window = estimator.getContextWindow('google/gemma-3-12b-it:free');
-      expect(window).toBeGreaterThan(0);
-      expect(window).not.toBe(200_000);
+      // google/gemma-3-12b-it has a 32,768-token context window in the catalog.
+      // Before Bug #3 fix, any non-Anthropic model would return 200_000.
+      const window = estimator.getContextWindow('google/gemma-3-12b-it');
+      expect(window).toBe(32_768);
     });
 
     it('returns a conservative fallback (8_192) for truly unknown models', () => {
@@ -91,7 +108,7 @@ describe('CostEstimator', () => {
     it('correctly reads Gemma context window for health (Bug #3 regression guard)', () => {
       // google/gemma-3-12b-it has a 32,768-token window in the catalog.
       // At 15,000 tokens that's 45% → 🟡.
-      // Before the fix, CostEstimator used Anthropic's 200K fallback → 7.5% → 🟢 (wrong).
+      // Before Bug #3 fix, CostEstimator used Anthropic's 200K fallback → 7.5% → 🟢 (wrong).
       const health = estimator.getContextHealth(15_000, 'google/gemma-3-12b-it');
       expect(health).toBe('🟡');
     });

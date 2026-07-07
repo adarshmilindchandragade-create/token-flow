@@ -2,7 +2,7 @@
   "name": "tokenflow-ai",
   "displayName": "TokenFlow AI",
   "description": "Token-aware AI context optimizer for VS Code. Works with OpenRouter, Anthropic, Ollama, and more.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "tokenflow-ai",
   "license": "MIT",
   "repository": {
@@ -143,6 +143,12 @@
           "default": 0,
           "minimum": 0,
           "description": "Block sending if the estimated request cost exceeds this amount in USD. Set to 0 to disable. Takes precedence over softBudgetUsd. Example: 0.50 prevents any single send costing more than $0.50."
+        },
+        "tokenflow.assumedOutputTokensForBudget": {
+          "type": "number",
+          "default": 500,
+          "minimum": 0,
+          "description": "Assumed output token count used in the pre-send cost estimate (real output length is unknown before the response arrives). Increase for prompts that typically produce long responses. Only relevant when softBudgetUsd or hardBudgetUsd is non-zero."
         }
       }
     },

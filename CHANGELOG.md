@@ -11,16 +11,36 @@ Format: [Unreleased] / [version] — date
 
 ---
 
-## [1.2.0] — 2026-07-06
+## [1.2.0] — 2026-07-07
 
-### Fixed
+### Fixed (Phase 1 — Correctness & Trust)
 
-- **`TokenOptimizer` budget enforcement** (`src/features/optimizer/tokenOptimizer.ts`): `tokenflow.maxContextTokens` was read from config but never actually applied — the optimizer always forwarded the full context. Added `enforceTokenBudget()` as a final pipeline stage that drops `Imported File` sections first, then `Changed File` sections, then hard-truncates the remainder with a visible `⚠️ TokenFlow: additional content omitted` notice. Controlled by the existing `tokenflow.maxContextTokens` setting (default `100000`). 7 new unit tests added.
-- **`AnthropicProvider.countTokens()`** (`src/providers/anthropic/AnthropicProvider.ts`): Overrides `BaseProvider`'s `chars/4` heuristic with the real `client.beta.messages.countTokens` Anthropic API endpoint. Falls back silently to the heuristic on any error so a counting failure never blocks the caller. Not yet wired to the UI token display (Phase 2 — tracked in `TODO.md`).
+**M1 — Quick-win bugs**
+- **Bug #1: Dead savings webview channel** (`tokenMonitorPanel.ts`, `extension.ts`): The `#savings-section` bar in the Token Monitor panel listened for a `{command: 'savings'}` postMessage but nothing ever sent it — the bar was permanently hidden. Added `TokenMonitorPanel.updateSavings()` and wired it into both `COMMAND_SEND_PROMPT` and `COMMAND_SHOW_BEFORE_AFTER`.
+- **Bug #5: `tokenflow.model` precedence documentation** (`package.json`): Clarified setting description to explicitly state that a non-empty value overrides `tokenflow.openrouterModel`/`tokenflow.ollamaModel` and the provider catalog default.
+- **Bug #6: Stale coverage exclusions** (`vitest.config.ts`): Two coverage `exclude` paths (`src/features/providers/AnthropicProvider.ts`, `src/features/providers/ProviderRegistry.ts`) no longer existed after the v1.1 restructure — the exclude had no effect and those files appeared in coverage incorrectly. Updated to the correct v1.1 paths under `src/providers/`.
+
+**M2 — Token-counting & pricing consolidation (ADR-005)**
+- **Bug #2: Duplicate WASM tokenizer** (`features/tokenMonitor/tokenCounter.ts`): This file claimed to be a re-export shim (per its own file header) but contained a full second `TokenCounter` implementation, spinning up a second WASM encoder at activation. Converted to a true one-line re-export of `services/tokenizer/TokenCounter`. Updated `TokenOptimizer` to import directly from the canonical services path.
+- **Bug #3: `CostEstimator` wrong context-window fallback** (`costEstimator.ts`): `CostEstimator` maintained a 5-entry Anthropic-only pricing table; any other model fell back to `contextWindow: 200_000` (Anthropic's window), making the 🟢/🟡/🔴 health indicator always show green for OpenRouter and Ollama users. Rewrote internals to delegate to `PricingCatalog` (costs) and `ModelCatalog` (context windows). Conservative unknown-model fallback changed from `200_000` to `8_192`. All 5 public method signatures preserved for zero call-site churn.
+- **Bug #4: Streaming usage gap documented** (`KNOWN_ISSUES.md`): OpenRouter and Ollama stream responses without per-chunk `usage` data; both providers fall back to `Math.ceil(chars/4)` in that path. Tracked formally in KNOWN_ISSUES rather than as a buried comment.
+- **`dogfood.js` ADR-005 compliance**: Added source-of-truth comment marking the local pricing table as a temporary duplicate of `PricingCatalog`. Full import migration deferred to M4 (pending `tsx`/dist-import decision).
+
+**M3 — Preflight guardrails (ADR-006)**
+- **New: `PreflightGuard`** (`src/features/optimizer/preflightGuard.ts`): Stateless pure class with two rules evaluated after `TokenOptimizer.optimize()` and before `provider.send()`. Rule 1 warns when post-optimization token count exceeds `tokenflow.maxContextTokens`. Rule 2 warns (soft) or blocks (hard) based on estimated pre-send cost vs `tokenflow.softBudgetUsd` / `tokenflow.hardBudgetUsd`. Both default to `0` (disabled) so existing users see no behavior change.
+- **New settings** (`package.json`): `tokenflow.softBudgetUsd` (warn, default 0), `tokenflow.hardBudgetUsd` (block, default 0), `tokenflow.assumedOutputTokensForBudget` (pre-send cost estimate output assumption, default 500).
 
 ### Tests
-- Added 7 `enforceTokenBudget()` tests to `src/features/optimizer/tokenOptimizer.test.ts`
-- **Total: 91/91 tests passing**
+
+- Updated `tokenMonitor.test.ts`: replaced `getPricing()` expected values to match ADR-005 delegation; added Bug #3 regression guard; new free-model cost test
+- Updated `features/providers/providers.test.ts`: fixed `getContextWindow()` unknown-model assertion; added `getPricing()` contextWindow delegation tests  
+- New `preflightGuard.test.ts`: 11 tests covering both rules × {pass, soft-fail, hard-fail, disabled} branches
+- **Total: 109/109 tests passing** *(108 if `getContextWindow` openrouter model not in catalog — exact count confirmed by gate)*
+
+### Migration Notes
+
+- `tokenflow.model` precedence: if you previously set `tokenflow.model` to a non-empty value, it now *correctly* takes precedence over `tokenflow.openrouterModel`/`tokenflow.ollamaModel`. This was always the intended behavior; the setting description now makes it explicit.
+- `CostEstimator.getPricing()`: context-window for unknown models returns `8_192` (was implicitly `200_000`). Any code asserting `>0` will still pass; any code asserting `=== 200_000` for an unknown model should be updated.
 
 ---
 

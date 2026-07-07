@@ -24,6 +24,10 @@ const SINGLE_FILE = (() => {
 })();
 
 // Provider pricing ($/M tokens) — mirrors PricingCatalog.ts
+// ADR-005: PricingCatalog is the single source of truth. This local copy
+// is a temporary duplicate pending the tsx/dist-import decision (ADR-005 §Migration step 3).
+// When updating model pricing, update PricingCatalog.ts FIRST, then sync here.
+// TODO(M4): replace this table with a require('../dist/providers/models/PricingCatalog') import.
 const PRICING = {
   'google/gemma-3-12b-it:free':          { input: 0,     output: 0     },
   'claude-3-5-sonnet-20241022':          { input: 3.0,   output: 15.0  },
@@ -120,7 +124,7 @@ function serializeFile(filePath) {
 
 // ─── Cost calculation ────────────────────────────────────────────────────────
 
-function estimateCost(model, inputTokens, outputTokens = 150) {
+function estimateCost(model, inputTokens, outputTokens = 500) {
   const p = PRICING[model];
   if (!p) return null;
   return ((p.input * inputTokens + p.output * outputTokens) / 1_000_000).toFixed(5);
@@ -215,7 +219,7 @@ function main() {
   // ─── Cost comparison ──────────────────────────────────────────────────────
 
   console.log('┌──────────────────────────────────────────────────────────────┐');
-  console.log('│ Cost Estimate (input tokens only, 150 output tokens assumed)  │');
+  console.log('│ Cost Estimate (input + 500 assumed output tokens)             │');
   console.log('├──────────────────────────────────┬───────────┬───────────────┤');
   console.log('│ Model                            │ Without TF│    With TF    │');
   console.log('├──────────────────────────────────┼───────────┼───────────────┤');

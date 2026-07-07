@@ -9,7 +9,7 @@ import { SessionStatsService } from './features/storage/sessionStats';
 import { ContextBuilder } from './features/context/contextBuilder';
 import { TokenOptimizer } from './features/optimizer/tokenOptimizer';
 import { BeforeAfterDiff } from './features/optimizer/beforeAfterDiff';
-import { PreflightGuard } from './features/optimizer/PreflightGuard';
+import { PreflightGuard } from './features/optimizer/preflightGuard';
 import { PricingCatalog } from './providers/models/PricingCatalog';
 import { Logger } from './shared/utils/logger';
 import { isTokenFlowError } from './shared/errors/TokenFlowError';
@@ -140,6 +140,7 @@ export function activate(context: vscode.ExtensionContext): void {
             const maxContextTokens = preflightConfig.get<number>('maxContextTokens', 0);
             const softBudgetUsd = preflightConfig.get<number>('softBudgetUsd', 0);
             const hardBudgetUsd = preflightConfig.get<number>('hardBudgetUsd', 0);
+            const assumedOutputTokens = preflightConfig.get<number>('assumedOutputTokensForBudget', 500);
 
             // Rule 1 — token ceiling (informational; content already truncated by optimizer)
             const tokenCheck = PreflightGuard.checkTokenCeiling(
@@ -154,7 +155,7 @@ export function activate(context: vscode.ExtensionContext): void {
             const estimatedCost = PricingCatalog.estimateCost(
               provider.modelId,
               optimized.optimizedTokenCount,
-              0, // output tokens unknown pre-send
+              assumedOutputTokens, // assumed output; real count unknown pre-send (ADR-006)
             );
             const costCheck = PreflightGuard.checkCostBudget(
               estimatedCost,

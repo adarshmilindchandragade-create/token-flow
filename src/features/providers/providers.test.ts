@@ -34,3 +34,18 @@ describe('CostEstimator.getContextWindow()', () => {
     expect(estimator.getContextWindow('some-future-model')).toBe(8_192);
   });
 });
+
+describe('CostEstimator.getPricing()', () => {
+  const estimator = new CostEstimator();
+
+  it('returns contextWindow from ModelCatalog, not a hardcoded fallback', () => {
+    const pricing = estimator.getPricing('claude-3-5-sonnet-20241022');
+    expect(pricing.contextWindow).toBe(200_000);
+    expect(pricing.inputCostPerMToken).toBeGreaterThan(0);
+  });
+
+  it('returns conservative contextWindow (8_192) for unknown models', () => {
+    const pricing = estimator.getPricing('some-future-model');
+    expect(pricing.contextWindow).toBe(8_192);
+  });
+});
