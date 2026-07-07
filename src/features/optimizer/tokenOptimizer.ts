@@ -203,8 +203,22 @@ export class TokenOptimizer implements IOptimizerPort {
       return notice.trim();
     }
 
+    // Fast path: estimate the character ceiling using the chars/4 heuristic
+    // (same relationship used by TokenCounter's WASM fallback and the test mock).
+    // This avoids O(log n) counter.count() calls on large strings in the common case.
+    // We verify once and fall back to binary search only if the estimate overshoots.
+    const estimatedChars = Math.floor(budget * 4);
+    const clampedEstimate = Math.min(estimatedChars, content.length);
+
+    if (this.counter.count(content.slice(0, clampedEstimate)) <= budget) {
+      // Estimate fits — use it directly (fast path: 2 counter calls total)
+      return content.slice(0, clampedEstimate) + notice;
+    }
+
+    // Estimate overshot (tiktoken counts more tokens than chars/4 for this content).
+    // Binary search the exact cutoff. Start from the estimate to reduce iterations.
     let low = 0;
-    let high = content.length;
+    let high = clampedEstimate;
     while (low < high) {
       const mid = Math.ceil((low + high + 1) / 2);
       if (this.counter.count(content.slice(0, mid)) <= budget) {

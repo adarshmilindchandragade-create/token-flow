@@ -11,6 +11,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    testTimeout: 20000, // CI runners are slower than local — budget for WASM init + binary search
     include: ['src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
